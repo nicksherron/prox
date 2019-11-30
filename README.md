@@ -2,9 +2,19 @@ proxyutils
 ===
 proxyutils is a command line utility written in Go for quickly finding and testing proxies from the web.
 
-[![asciicast](https://asciinema.org/a/284382.svg)](https://asciinema.org/a/284382)
 
+### Downloading
 
+```bash
+GO111MODULE=on go get github.com/nicksherron/proxyutils
+```
+Keep in mind this will build master branch which is in active development. 
+Versions and stable releases are coming, but until then there's no guarantees
+
+### Supported platforms
+  proxyutils has been tested on Linux(ubuntu) and OS X
+
+### Usage
 ```bash
 proxytuils --help
 NAME:
@@ -25,3 +35,5 @@ OPTIONS:
    --version, -v              print the version (default: false)
 
 ```
+
+[![asciicast](https://asciinema.org/a/284382.svg)](https://asciinema.org/a/284382)
