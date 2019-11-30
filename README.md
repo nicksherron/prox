@@ -41,5 +41,7 @@ OPTIONS:
 
 Here's and example of downloading 20,000 proxies and returning the first 100 that returned 200 status code 
 during testing. 
-
+```bash
+proxyutil --limit 100 --workers 500
+```
 ![example](https://github.com/nicksherron/proxyutil/blob/master/example.gif?raw=true)
