@@ -8,8 +8,8 @@ proxyutil is a command line utility for quickly finding and testing proxies from
 ```bash
 GO111MODULE=on go get github.com/nicksherron/proxyutil
 ```
-Keep in mind this will build master branch which is in active development. To get the
-stable release.
+Keep in mind this will build master branch which is in active development. 
+To get the stable release run
 ```bash
 GO111MODULE=on go get github.com/nicksherron/proxyutil@v1.1.0
 ```
