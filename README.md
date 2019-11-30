@@ -11,7 +11,7 @@ GO111MODULE=on go get github.com/nicksherron/prox
 Keep in mind this will build master branch which is in active development. 
 To get the stable release run
 ```bash
-GO111MODULE=on go get github.com/nicksherron/prox@v1.1.0
+GO111MODULE=on go get github.com/nicksherron/prox@v1.2.0
 ```
 
 
