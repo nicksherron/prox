@@ -35,4 +35,4 @@ OPTIONS:
    --version, -v              print the version (default: false)
 
 ```
-![Alt Text](https://github.com/nicksherron/proxyutil/blob/master/example.gif?raw=true)
+![example](https://github.com/nicksherron/proxyutil/blob/master/example.gif?raw=true)
