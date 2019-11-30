@@ -15,7 +15,22 @@ GO111MODULE=on go get github.com/nicksherron/prox@v1.2.0
 ```
 
 ### Supported platforms
-  prox has been tested on Linux(ubuntu) and OS X
+  prox has been tested on Linux(ubuntu) and OSX
+
+### Example
+
+Here's and example of downloading 20,000 proxies and returning the first 100 that returned 200 status code 
+during testing. 
+```bash
+prox  --workers 400 --limit 100
+```
+![example](https://github.com/nicksherron/prox/blob/master/example.gif?raw=true)
+
+When using a high worker count you will usually need to increase your open file limit. 
+On OSX and Linux you can do this by running
+```bash
+ulimit -n 10000
+```
 
 ### Usage
 ```bash
@@ -38,13 +53,3 @@ OPTIONS:
    --version, -v              print the version (default: false)
 
 ```
-
-
-### Example
-
-Here's and example of downloading 20,000 proxies and returning the first 100 that returned 200 status code 
-during testing. 
-```bash
-prox  --workers 400 --limit 100
-```
-![example](https://github.com/nicksherron/prox/blob/master/example.gif?raw=true)
