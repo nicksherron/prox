@@ -6,7 +6,7 @@ proxyutil is a command line utility written in Go for quickly finding and testin
 ### Downloading
 
 ```bash
-GO111MODULE=on go get github.com/nicksherron/proxyutils
+GO111MODULE=on go get github.com/nicksherron/proxyutil
 ```
 Keep in mind this will build master branch which is in active development. 
 Versions and stable releases are coming, but until then there's no guarantees
@@ -35,4 +35,4 @@ OPTIONS:
    --version, -v              print the version (default: false)
 
 ```
-![Alt Text](https://raw.githubusercontent.com/nicksherron/proxyutil//Users/nicksherron/.go/src/github.com/nicksherron/proxyutil/proxyutil_example.gif)
+![Alt Text](https://github.com/nicksherron/proxyutil/blob/master/proxyutil_example.gif?raw=true)
