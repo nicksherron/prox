@@ -56,7 +56,7 @@ VERSION:
 				Email: "nsherron90@gmail.com",
 			},
 		},
-		Name:  "proxytuil",
+		Name:  "prox",
 		Usage: "Find and test proxies from the web.",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
