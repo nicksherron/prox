@@ -1,6 +1,6 @@
 proxyutil
 ===
-proxyutil is a command line utility written in Go for quickly finding and testing proxies from the web.
+proxyutil is a command line utility for quickly finding and testing proxies from the web.
 
 
 ### Downloading
