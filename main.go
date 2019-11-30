@@ -52,9 +52,7 @@ VERSION:
 			},
 		},
 		Name:      "proxytuils",
-		HelpName:  "proxytuils",
 		Usage:     "Find and test proxies from the web.",
-		UsageText: "Find and test proxies from the web.",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:        "file",
