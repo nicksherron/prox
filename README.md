@@ -14,7 +14,6 @@ To get the stable release run
 GO111MODULE=on go get github.com/nicksherron/prox@v1.2.0
 ```
 
-
 ### Supported platforms
   prox has been tested on Linux(ubuntu) and OS X
 
