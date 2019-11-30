@@ -8,11 +8,7 @@ prox is a command line utility for quickly finding and testing proxies from the 
 ```bash
 GO111MODULE=on go get github.com/nicksherron/prox
 ```
-Keep in mind this will build master branch which is in active development. 
-To get the stable release run
-```bash
-GO111MODULE=on go get github.com/nicksherron/prox@v1.0.0
-```
+
 
 ### Supported platforms
   prox has been tested on Linux(ubuntu) and OSX
