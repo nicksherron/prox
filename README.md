@@ -1,22 +1,22 @@
-proxyutil
+prox
 ===
-proxyutil is a command line utility for quickly finding and testing proxies from the web.
+prox is a command line utility for quickly finding and testing proxies from the web.
 
 
 ### Downloading
 
 ```bash
-GO111MODULE=on go get github.com/nicksherron/proxyutil
+GO111MODULE=on go get github.com/nicksherron/prox
 ```
 Keep in mind this will build master branch which is in active development. 
 To get the stable release run
 ```bash
-GO111MODULE=on go get github.com/nicksherron/proxyutil@v1.1.0
+GO111MODULE=on go get github.com/nicksherron/prox@v1.1.0
 ```
 
 
 ### Supported platforms
-  proxyutil has been tested on Linux(ubuntu) and OS X
+  prox has been tested on Linux(ubuntu) and OS X
 
 ### Usage
 ```bash
@@ -46,6 +46,6 @@ OPTIONS:
 Here's and example of downloading 20,000 proxies and returning the first 100 that returned 200 status code 
 during testing. 
 ```bash
-proxyutil --limit 100 --workers 500
+prox  --workers 400 --limit 100
 ```
-![example](https://github.com/nicksherron/proxyutil/blob/master/example.gif?raw=true)
+![example](https://github.com/nicksherron/prox/blob/master/example.gif?raw=true)
