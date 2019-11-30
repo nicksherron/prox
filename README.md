@@ -1,6 +1,6 @@
-proxyutils
+proxyutil
 ===
-proxyutils is a command line utility written in Go for quickly finding and testing proxies from the web.
+proxyutil is a command line utility written in Go for quickly finding and testing proxies from the web.
 
 
 ### Downloading
@@ -12,13 +12,13 @@ Keep in mind this will build master branch which is in active development.
 Versions and stable releases are coming, but until then there's no guarantees
 
 ### Supported platforms
-  proxyutils has been tested on Linux(ubuntu) and OS X
+  proxyutil has been tested on Linux(ubuntu) and OS X
 
 ### Usage
 ```bash
-proxytuils --help
+proxytuil --help
 NAME:
-   proxytuils - Find and test proxies from the web.
+   proxytuil - Find and test proxies from the web.
 
 AUTHOR:
    Nick Sherron <nsherron90@gmail.com>
@@ -35,5 +35,6 @@ OPTIONS:
    --version, -v              print the version (default: false)
 
 ```
+![Alt Text](https://raw.githubusercontent.com/nicksherron/proxyutil//Users/nicksherron/.go/src/github.com/nicksherron/proxyutil/proxyutil_example.gif)
 
-[![asciicast](https://asciinema.org/a/284382.svg)](https://asciinema.org/a/284382)
+image:: https://raw.githubusercontent.com/
