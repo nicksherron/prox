@@ -5,6 +5,8 @@ import (
 	"github.com/urfave/cli/v2"
 	"log"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 )
 
@@ -51,8 +53,8 @@ VERSION:
 				Email: "nsherron90@gmail.com",
 			},
 		},
-		Name:      "proxytuils",
-		Usage:     "Find and test proxies from the web.",
+		Name:  "proxytuils",
+		Usage: "Find and test proxies from the web.",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:        "file",
@@ -97,6 +99,12 @@ VERSION:
 			},
 		},
 		Action: func(c *cli.Context) error {
+			go func() {
+				defer cli.OsExiter(0)
+				sigs := make(chan os.Signal, 1)
+				signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+				<-sigs
+			}()
 			_, _ = fmt.Fprintln(os.Stderr, "Finding proxies ...")
 			proxies := downloadProxies()
 			if !noCheck {
@@ -135,6 +143,7 @@ VERSION:
 					}
 				}
 			}
+
 			return nil
 		},
 	}
