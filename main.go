@@ -1,3 +1,5 @@
+//TODO: Make tests
+
 package main
 
 import (
