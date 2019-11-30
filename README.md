@@ -35,4 +35,11 @@ OPTIONS:
    --version, -v              print the version (default: false)
 
 ```
+
+
+### Example
+
+Here's and example of downloading 20,000 proxies and returning the first 100 that returned 200 status code 
+during testing. 
+
 ![example](https://github.com/nicksherron/proxyutil/blob/master/example.gif?raw=true)
