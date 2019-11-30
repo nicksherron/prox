@@ -4,12 +4,13 @@ package main
 
 import (
 	"fmt"
-	"github.com/urfave/cli/v2"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+
+	"github.com/urfave/cli/v2"
 )
 
 func check(e error) {
@@ -49,7 +50,7 @@ VERSION:
 `
 
 	app := &cli.App{
-		Version:"v1.0.0",
+		Version: "unstable",
 		Authors: []*cli.Author{
 			&cli.Author{
 				Name:  "Nick Sherron",
