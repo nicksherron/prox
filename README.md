@@ -36,5 +36,3 @@ OPTIONS:
 
 ```
 ![Alt Text](https://raw.githubusercontent.com/nicksherron/proxyutil//Users/nicksherron/.go/src/github.com/nicksherron/proxyutil/proxyutil_example.gif)
-
-image:: https://raw.githubusercontent.com/
