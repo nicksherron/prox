@@ -19,9 +19,9 @@ GO111MODULE=on go get github.com/nicksherron/prox@v1.2.0
 
 ### Usage
 ```bash
-proxytuil --help
+prox --help
 NAME:
-   proxytuil - Find and test proxies from the web.
+   prox - Find and test proxies from the web.
 
 AUTHOR:
    Nick Sherron <nsherron90@gmail.com>
