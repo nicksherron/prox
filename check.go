@@ -48,10 +48,10 @@ func proxyCheck(addr string, bar *pb.ProgressBar) {
 		TLSClientConfig:     &tls.Config{InsecureSkipVerify: true},
 	}
 	client := &http.Client{
-		Timeout:   *timeout,
+		Timeout:   timeout,
 		Transport: tr,
 	}
-	req, err := http.NewRequest("GET", *testUrl, nil)
+	req, err := http.NewRequest("GET", testUrl, nil)
 	check(err)
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("X-Forwarded-For", fake.IPv4())
@@ -64,8 +64,8 @@ func proxyCheck(addr string, bar *pb.ProgressBar) {
 			check(err)
 		}
 	}
-	if *limit > 0 {
-		if atomic.CompareAndSwapUint64(&goodCount, *limit, *limit) {
+	if limit > 0 {
+		if atomic.CompareAndSwapUint64(&goodCount, limit, limit) {
 			return
 		}
 	}
@@ -93,17 +93,17 @@ func checkInit(addresses []string) {
 			wgC.Add(1)
 			go proxyCheck(addr, bar)
 			counter++
-			if *limit > 0 {
-				if atomic.CompareAndSwapUint64(&goodCount, *limit, *limit) {
+			if limit > 0 {
+				if atomic.CompareAndSwapUint64(&goodCount, limit, limit) {
 					return
 				}
 			}
-			if counter >= *workers {
+			if counter >= workers {
 				wgC.Wait()
 				counter = 0
 			}
 		}
-		if *limit == 0 {
+		if limit == 0 {
 			wgC.Wait()
 		}
 	}()

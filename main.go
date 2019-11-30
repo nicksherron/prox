@@ -1,13 +1,10 @@
 package main
 
 import (
-	"flag"
 	"fmt"
+	"github.com/urfave/cli/v2"
 	"log"
 	"os"
-	"runtime"
-	"runtime/pprof"
-	"runtime/trace"
 	"time"
 )
 
@@ -18,46 +15,65 @@ func check(e error) {
 }
 
 var (
-	cpuProfile   = flag.String("cpuprofile", "", "write cpu profile to `file`")
-	memProfile   = flag.String("memprofile", "", "write memory profile to `file`")
-	traceProfile = flag.String("traceprofile", "", "write trace profile to `file`")
-	outFile      = flag.String("file", "", "File name to write to instead of stdout.")
-	noCheck      = flag.Bool("nocheck", false, "Download only and skip proxy checks.")
-	limit        = flag.Uint64("limit", 0, "Limit number of good proxies to check before completing.")
-	timeout      = flag.Duration("t", 15*time.Second, "Specify request time out for checking proxies.")
-	workers      = flag.Int("w", 5, "Number of concurrent requests to make for checking proxies.")
-	testUrl      = flag.String("u", "https://httpbin.org/ip", "The url to test proxies against.")
-	urls         []string
+	outFile string
+	noCheck bool
+	limit   uint64
+	timeout time.Duration
+	workers int
+	testUrl string
+	urls    []string
 )
 
 func main() {
-	flag.Parse()
-	if *cpuProfile != "" {
-		f, err := os.Create(*cpuProfile)
-		if err != nil {
-			log.Fatal("could not create CPU profile: ", err)
-		}
-		defer f.Close()
-		if err := pprof.StartCPUProfile(f); err != nil {
-			log.Fatal("could not start CPU profile: ", err)
-		}
-		defer pprof.StopCPUProfile()
-	}
-	if *traceProfile != "" {
-		f, err := os.Create(*traceProfile)
-		if err != nil {
-			log.Fatal("could not create CPU profile: ", err)
-		}
-		defer f.Close()
-		if err := trace.Start(f); err != nil {
-			log.Fatal("could not start Trace profile: ", err)
-		}
-		defer trace.Stop()
+	app := &cli.App{
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:        "file",
+				Aliases: []string{"f"},
+				Value:       "",
+				Usage:       "File name to write to instead of stdout.",
+				Destination: &outFile,
+			},
+			&cli.BoolFlag{
+				Name:        "nocheck",
+				Value:       false,
+				Usage:       "Download only and skip proxy checks.",
+				Destination: &noCheck,
+			},
+			&cli.Uint64Flag{
+				Name:        "limit",
+				Aliases: []string{"l"},
+				Value:       0,
+				Usage:       "Limit number of good proxies to check before completing.",
+				Destination: &limit,
+			},
+			&cli.DurationFlag{
+				Name:        "timeout",
+				Aliases: []string{"t"},
+				Value:       15*time.Second,
+				Usage:       "Specify request time out for checking proxies.",
+				Destination: &timeout,
+			},
+			&cli.IntFlag{
+				Name:        "workers",
+				Aliases: []string{"w"},
+				Value:       5,
+				Usage:       "Number of concurrent requests to make for checking proxies.",
+				Destination: &workers,
+			},
+			&cli.StringFlag{
+				Name:        "url",
+				Aliases: []string{"u"},
+				Value:       "https://httpbin.org/ip",
+				Usage:       "The url to test proxies against.",
+				Destination: &testUrl,
+			},
+		},
 	}
 
 	_, _ = fmt.Fprintln(os.Stderr, "Finding proxies ...")
 	proxies := downloadProxies()
-	if !*noCheck {
+	if !noCheck {
 		checkInit(proxies)
 		if len(good) == 0 {
 			_, _ = fmt.Fprintln(os.Stderr, "no good proxies found")
@@ -65,9 +81,9 @@ func main() {
 		}
 	}
 
-	if !*noCheck {
-		if *outFile != "" {
-			g, err := os.Create(*outFile)
+	if !noCheck {
+		if outFile != "" {
+			g, err := os.Create(outFile)
 			check(err)
 			defer g.Close()
 
@@ -80,8 +96,8 @@ func main() {
 			}
 		}
 	} else {
-		if *outFile != "" {
-			g, err := os.Create(*outFile)
+		if outFile != "" {
+			g, err := os.Create(outFile)
 			check(err)
 			defer g.Close()
 			for _, v := range proxies {
@@ -93,16 +109,9 @@ func main() {
 			}
 		}
 	}
-
-	if *memProfile != "" {
-		f, err := os.Create(*memProfile)
-		if err != nil {
-			log.Fatal("could not create memory profile: ", err)
-		}
-		defer f.Close()
-		runtime.GC() // get up-to-date statistics
-		if err := pprof.WriteHeapProfile(f); err != nil {
-			log.Fatal("could not write memory profile: ", err)
-		}
+	err := app.Run(os.Args)
+	if err != nil {
+		log.Fatal(err)
 	}
+
 }
