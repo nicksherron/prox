@@ -141,7 +141,7 @@ func proxyCheck(addr string, bar *pb.ProgressBar) {
 }
 func checkInit(addresses []string) {
 	realIp = hostIp()
-	_, _ = fmt.Fprintf(os.Stderr,`Host ip identified as %v\n`,realIp)
+	fmt.Fprintln(os.Stderr,`Host ip identified as `,realIp)
 	//log.SetOutput(nil)
 	start := time.Now()
 	counter := 0
