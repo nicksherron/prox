@@ -29,24 +29,35 @@ type HttpBin struct {
 		XProxyID        string `json:"X-Proxy-Id"`
 		XRealIP         string `json:"X-Real-Ip"`
 	} `json:"headers"`
-	Origin string `json:"origin"`
-	URL    string `json:"url"`
-	Proxy string `json:"proxy"`
-	Transparent bool `json:"transparent"`
+	Origin      string `json:"origin"`
+	URL         string `json:"url"`
+	Proxy       string `json:"proxy"`
+	Transparent bool   `json:"transparent"`
+	Elite       bool   `json:"elite"`
 }
 
-
 var (
-	wgC  sync.WaitGroup
-	good []string
+	wgC         sync.WaitGroup
+	good        []string
 	mutex       = &sync.Mutex{}
 	goodCount   uint64
 	badCount    uint64
 	toCount     uint64
 	reqCount    uint64
 	barTemplate = `{{string . "message"}}{{counters . }} {{bar . }} {{percent . }} {{speed . "%s req/sec" }}`
+	realIp      string
 )
 
+func hostIp() string {
+	req, err := http.NewRequest("GET", "https://ipinfo.io/ip", nil)
+	check(err)
+	curl := &http.Client{}
+	resp, err := curl.Do(req)
+	check(err)
+	defer resp.Body.Close()
+	body, _ := ioutil.ReadAll(resp.Body)
+	return strings.ReplaceAll(string(body), "\n", "")
+}
 
 func proxyCheck(addr string, bar *pb.ProgressBar) {
 	defer func() {
@@ -96,13 +107,16 @@ func proxyCheck(addr string, bar *pb.ProgressBar) {
 			body, err := ioutil.ReadAll(resp.Body)
 			check(err)
 			var jsonBody HttpBin
-			err = json.Unmarshal(body,&jsonBody)
+			err = json.Unmarshal(body, &jsonBody)
 			check(err)
 			jsonBody.Proxy = addr
-			if strings.Contains(addr, jsonBody.Headers.XRealIP){
+			jsonBody.Transparent = false
+			jsonBody.Elite = false
+			if !strings.Contains(realIp, jsonBody.Headers.XRealIP) {
 				jsonBody.Transparent = true
-			}else {
-				jsonBody.Transparent = false
+				if !strings.Contains(realIp,jsonBody.Origin){
+					jsonBody.Elite = true
+				}
 			}
 			b, err := json.MarshalIndent(&jsonBody, ``, `   `)
 			check(err)
@@ -122,6 +136,8 @@ func proxyCheck(addr string, bar *pb.ProgressBar) {
 }
 
 func checkInit(addresses []string) {
+	realIp = hostIp()
+	_, _ = fmt.Fprintf(os.Stderr,`Host ip identified as %v\n`,realIp)
 	//log.SetOutput(nil)
 	start := time.Now()
 	counter := 0
@@ -154,5 +170,5 @@ func checkInit(addresses []string) {
 	done := time.Since(start)
 	_, _ = fmt.Fprintf(os.Stderr,
 		"\nGood:\t%v\tBad:\t%v\tTimed out:\t%v\tTook:\t%v\t\n\n",
-		goodCount, badCount, toCount,done)
+		goodCount, badCount, toCount, done)
 }
