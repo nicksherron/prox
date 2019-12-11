@@ -97,7 +97,7 @@ VERSION:
 			&cli.StringFlag{
 				Name:        "url",
 				Aliases:     []string{"u"},
-				Value:       "https://httpbin.org/ip",
+				Value:       "http://httpbin.org/get?show_env",
 				Usage:       "The url to test proxies against.",
 				Destination: &testUrl,
 			},

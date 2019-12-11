@@ -2,9 +2,11 @@ package main
 
 import (
 	"crypto/tls"
+	"encoding/json"
 	"fmt"
 	"github.com/cheggaaa/pb/v3"
 	"github.com/icrowley/fake"
+	"io/ioutil"
 	"net"
 	"net/http"
 	"net/url"
@@ -14,6 +16,25 @@ import (
 	"sync/atomic"
 	"time"
 )
+
+type HttpBin struct {
+	Headers struct {
+		Accept          string `json:"Accept"`
+		Host            string `json:"Host"`
+		UserAgent       string `json:"User-Agent"`
+		Via             string `json:"Via"`
+		XForwardedFor   string `json:"X-Forwarded-For"`
+		XForwardedPort  string `json:"X-Forwarded-Port"`
+		XForwardedProto string `json:"X-Forwarded-Proto"`
+		XProxyID        string `json:"X-Proxy-Id"`
+		XRealIP         string `json:"X-Real-Ip"`
+	} `json:"headers"`
+	Origin string `json:"origin"`
+	URL    string `json:"url"`
+	Proxy string `json:"proxy"`
+	Transparent bool `json:"transparent"`
+}
+
 
 var (
 	wgC  sync.WaitGroup
@@ -25,6 +46,7 @@ var (
 	reqCount    uint64
 	barTemplate = `{{string . "message"}}{{counters . }} {{bar . }} {{percent . }} {{speed . "%s req/sec" }}`
 )
+
 
 func proxyCheck(addr string, bar *pb.ProgressBar) {
 	defer func() {
@@ -70,10 +92,30 @@ func proxyCheck(addr string, bar *pb.ProgressBar) {
 		}
 	}
 	if resp.StatusCode == 200 {
-		atomic.AddUint64(&goodCount, 1)
-		mutex.Lock()
-		good = append(good, addr)
-		mutex.Unlock()
+		if testUrl == "http://httpbin.org/get?show_env" {
+			body, err := ioutil.ReadAll(resp.Body)
+			check(err)
+			var jsonBody HttpBin
+			err = json.Unmarshal(body,&jsonBody)
+			check(err)
+			jsonBody.Proxy = addr
+			if strings.Contains(addr, jsonBody.Headers.XRealIP){
+				jsonBody.Transparent = true
+			}else {
+				jsonBody.Transparent = false
+			}
+			b, err := json.MarshalIndent(&jsonBody, ``, `   `)
+			check(err)
+			atomic.AddUint64(&goodCount, 1)
+			mutex.Lock()
+			good = append(good, string(b))
+			mutex.Unlock()
+		} else {
+			atomic.AddUint64(&goodCount, 1)
+			mutex.Lock()
+			good = append(good, addr)
+			mutex.Unlock()
+		}
 	} else {
 		atomic.AddUint64(&badCount, 1)
 	}
