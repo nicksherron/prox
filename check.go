@@ -36,6 +36,7 @@ type HttpBin struct {
 	Elite       bool   `json:"elite"`
 }
 
+
 var (
 	wgC         sync.WaitGroup
 	good        []string
@@ -49,14 +50,18 @@ var (
 )
 
 func hostIp() string {
-	req, err := http.NewRequest("GET", "https://ipinfo.io/ip", nil)
+	req, err := http.NewRequest("GET", "http://httpbin.org/get?show_env", nil)
+	req.Header.Set("Accept", "application/json")
 	check(err)
 	curl := &http.Client{}
 	resp, err := curl.Do(req)
 	check(err)
 	defer resp.Body.Close()
-	body, _ := ioutil.ReadAll(resp.Body)
-	return strings.ReplaceAll(string(body), "\n", "")
+	body, err := ioutil.ReadAll(resp.Body)
+	check(err)
+	var jsonBody HttpBin
+	err = json.Unmarshal(body, &jsonBody)
+	return jsonBody.Headers.XRealIP
 }
 
 func proxyCheck(addr string, bar *pb.ProgressBar) {
@@ -134,7 +139,6 @@ func proxyCheck(addr string, bar *pb.ProgressBar) {
 		atomic.AddUint64(&badCount, 1)
 	}
 }
-
 func checkInit(addresses []string) {
 	realIp = hostIp()
 	_, _ = fmt.Fprintf(os.Stderr,`Host ip identified as %v\n`,realIp)
