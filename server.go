@@ -6,7 +6,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
-	//"strings"
+	"strings"
 	"time"
 )
 
@@ -15,16 +15,12 @@ func serve(proxyQueue []string) {
 		Addr: "localhost:6379",
 		DB:   5,
 	})
-
 	client.Del("proxy")
 	for _, v := range proxyQueue {
 		client.RPush("proxy", v)
 	}
-
-
 	proxy := goproxy.NewProxyHttpServer()
 	proxy.Verbose = true
-
 	http.HandleFunc("/", handler(client, proxy))
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
@@ -41,15 +37,10 @@ func handler(client *redis.Client, p *goproxy.ProxyHttpServer) func(http.Respons
 		}
 		p.Tr = &http.Transport{
 			Proxy: http.ProxyURL(proxyUrl),
-			//Dial: (&net.Dialer{
-			//	Timeout: 15 * time.Second,
-			//}).Dial,
-			//DisableKeepAlives:   false,
-			//MaxIdleConnsPerHost: 200,
 		}
-		//proxIp := strings.Split(strings.ReplaceAll(purl,`http://`,``),`:`)[0]
+		proxIp := strings.Split(strings.ReplaceAll(purl,`http://`,``),`:`)[0]
 		//r.Header.Del("X-Forwarded-For")
-		//r.Header.Set("X-Forwarded-For",proxIp)
+		r.Header.Set("X-Forwarded-For",proxIp)
 		p.ServeHTTP(w, r)
 	}
 }
