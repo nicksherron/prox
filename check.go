@@ -7,7 +7,6 @@ import (
 	"github.com/cheggaaa/pb/v3"
 	"github.com/icrowley/fake"
 	"io/ioutil"
-	"log"
 	"net"
 	"net/http"
 	"net/url"
@@ -158,8 +157,6 @@ func proxyCheck(addr string, bar *pb.ProgressBar) {
 }
 func checkInit(addresses []string) {
 	realIp = hostIp()
-	fmt.Fprintln(os.Stderr, `Host ip identified as `, realIp)
-	log.SetOutput(nil)
 	start := time.Now()
 	counter := 0
 	bar := pb.ProgressBarTemplate(barTemplate).Start(len(addresses)).SetMaxWidth(80)
@@ -192,5 +189,4 @@ func checkInit(addresses []string) {
 	_, _ = fmt.Fprintf(os.Stderr,
 		"\nGood:\t%v\tBad:\t%v\tTimed out:\t%v\tTook:\t%v\t\n\n",
 		goodCount, badCount, toCount, done)
-	log.SetOutput(os.Stderr)
 }
