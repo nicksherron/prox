@@ -37,7 +37,6 @@ type HttpBin struct {
 	Elite       bool   `json:"elite"`
 }
 
-
 var (
 	wgC         sync.WaitGroup
 	good        []string
@@ -117,20 +116,20 @@ func proxyCheck(addr string, bar *pb.ProgressBar) {
 			err = json.Unmarshal(body, &jsonBody)
 			check(err)
 			jsonBody.Proxy = addr
-			jsonBody.Transparent = true
+			jsonBody.Transparent = false
 			jsonBody.Elite = true
-			if !strings.Contains(realIp, jsonBody.Headers.XRealIP) {
-				jsonBody.Transparent = false
-				inOrigin := 0
+			if realIp == jsonBody.Headers.XRealIP {
+				jsonBody.Transparent = true
+				//inOrigin := 0
 				for _, ips := range strings.Fields(strings.ReplaceAll(jsonBody.Origin, `,`, ``)) {
 					if ips == realIp {
 						jsonBody.Elite = false
-						inOrigin++
+						//inOrigin++
 					}
 				}
-				if inOrigin != 0 {
-					jsonBody.Elite = false
-				}
+				//if inOrigin != 0 {
+				//	jsonBody.Elite = false
+				//}
 			}
 			//204.48.22.103
 			b, err := json.MarshalIndent(&jsonBody, ``, `   `)
@@ -151,7 +150,7 @@ func proxyCheck(addr string, bar *pb.ProgressBar) {
 }
 func checkInit(addresses []string) {
 	realIp = hostIp()
-	fmt.Fprintln(os.Stderr,`Host ip identified as `,realIp)
+	fmt.Fprintln(os.Stderr, `Host ip identified as `, realIp)
 	log.SetOutput(nil)
 	start := time.Now()
 	counter := 0
