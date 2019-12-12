@@ -4,7 +4,6 @@ import (
 	"github.com/elazarl/goproxy"
 	"github.com/go-redis/redis/v7"
 	"log"
-	"net"
 	"net/http"
 	"net/url"
 	"time"
@@ -17,20 +16,19 @@ func serve(proxyQueue []string) {
 	})
 
 	client.Del("proxy")
-
 	for _, v := range proxyQueue {
-		client.SAdd("proxy",v)
+		client.RPush("proxy", v)
 	}
 
 	proxy := goproxy.NewProxyHttpServer()
-	//proxy.Verbose = true
+	proxy.Verbose = true
 
 	http.HandleFunc("/", handler(client, proxy))
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 func handler(client *redis.Client, p *goproxy.ProxyHttpServer) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		purl, err := client.SRandMember("proxy").Result()
+		purl, err := client.BRPopLPush("proxy", "proxy", 1*time.Second).Result()
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -41,14 +39,13 @@ func handler(client *redis.Client, p *goproxy.ProxyHttpServer) func(http.Respons
 		}
 		p.Tr = &http.Transport{
 			Proxy: http.ProxyURL(proxyUrl),
-			Dial: (&net.Dialer{
-				Timeout: 15 * time.Second,
-			}).Dial,
-			DisableKeepAlives:   false,
-			MaxIdleConnsPerHost: 200,
+			//Dial: (&net.Dialer{
+			//	Timeout: 15 * time.Second,
+			//}).Dial,
+			//DisableKeepAlives:   false,
+			//MaxIdleConnsPerHost: 200,
 		}
 		r.Header.Del("X-Forwarded-For")
 		p.ServeHTTP(w, r)
 	}
 }
-
