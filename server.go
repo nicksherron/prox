@@ -3,7 +3,6 @@ package main
 import (
 	"github.com/elazarl/goproxy"
 	"github.com/go-redis/redis/v7"
-	"golang.org/x/net/context"
 	"log"
 	"net/http"
 	"net/url"
@@ -41,15 +40,13 @@ func handler(client *redis.Client, p *goproxy.ProxyHttpServer) func(http.Respons
 		}
 		p.Tr = &http.Transport{
 			Proxy: http.ProxyURL(proxyUrl),
+			ForceAttemptHTTP2:     false,
 			//Dial: (&net.Dialer{
 			//	Timeout: 15 * time.Second,
 			//}).Dial,
 			//DisableKeepAlives:   false,
 			//MaxIdleConnsPerHost: 200,
 		}
-		ctx, cancel := context.WithTimeout(context.Background(), 5 *time.Second)
-		defer cancel()
-		r.WithContext(ctx)
 		r.Header.Del("X-Forwarded-For")
 		p.ServeHTTP(w, r)
 	}

@@ -30,6 +30,7 @@ var (
 	showRequest  bool
 	serveProxies bool
 	eliteOnly bool
+	noTransparent bool
 )
 
 func main() {
@@ -121,6 +122,13 @@ AUTHOR:
 				Value:       false,
 				Usage:       "Only use fully anonymous proxies. Only works if using default test url",
 				Destination: &eliteOnly,
+			},
+			&cli.BoolFlag{
+				Name:        "no-transparent",
+				Aliases:     []string{"nt"},
+				Value:       false,
+				Usage:       "Filter out transparent proxies. Only works if using default test url",
+				Destination: &noTransparent,
 			},
 		},
 		Action: func(c *cli.Context) error {

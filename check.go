@@ -7,7 +7,6 @@ import (
 	"github.com/cheggaaa/pb/v3"
 	"github.com/icrowley/fake"
 	"io/ioutil"
-	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -80,9 +79,6 @@ func proxyCheck(addr string, bar *pb.ProgressBar) {
 	check(err)
 	tr := &http.Transport{
 		Proxy: http.ProxyURL(proxyUrl),
-		Dial: (&net.Dialer{
-			Timeout: 60 * time.Second,
-		}).Dial,
 		TLSHandshakeTimeout: 60 * time.Second,
 		TLSClientConfig:     &tls.Config{InsecureSkipVerify: true},
 	}
@@ -128,6 +124,9 @@ func proxyCheck(addr string, bar *pb.ProgressBar) {
 				}
 			}
 			if eliteOnly && !jsonBody.Elite {
+				return
+			}
+			if noTransparent && jsonBody.Transparent {
 				return
 			}
 
