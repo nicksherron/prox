@@ -6,8 +6,10 @@ import (
 	"fmt"
 	"github.com/cheggaaa/pb/v3"
 	"github.com/icrowley/fake"
+	"golang.org/x/net/publicsuffix"
 	"io/ioutil"
 	"net/http"
+	"net/http/cookiejar"
 	"net/url"
 	"os"
 	"strings"
@@ -82,9 +84,13 @@ func proxyCheck(addr string, bar *pb.ProgressBar) {
 		TLSHandshakeTimeout: 60 * time.Second,
 		TLSClientConfig:     &tls.Config{InsecureSkipVerify: true},
 	}
+	jar, err := cookiejar.New(&cookiejar.Options{PublicSuffixList: publicsuffix.List})
+	check(err)
+
 	client := &http.Client{
 		Timeout:   timeout,
 		Transport: tr,
+		Jar:       jar,
 	}
 	req, err := http.NewRequest("GET", testUrl, nil)
 	check(err)

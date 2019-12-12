@@ -18,7 +18,7 @@ import (
 
 var (
 	proxies []string
-	wgD sync.WaitGroup
+	wgD     sync.WaitGroup
 	// Matches ip and port
 	reProxy       = regexp.MustCompile(`(?ms)(?P<ip>(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?))(?:.*?(?:(?:(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?))|(?P<port>\d{2,5})))`)
 	templateProxy = "http://${ip}:${port}\n"
@@ -85,7 +85,7 @@ func counter(quit chan int) {
 					i++
 				}
 			}
-			fmt.Fprintf(os.Stderr,"\rFound %d proxies", i)
+			fmt.Fprintf(os.Stderr, "\rFound %d proxies", i)
 			cf.Reset()
 			time.Sleep(1 * time.Second)
 		}
@@ -93,7 +93,7 @@ func counter(quit chan int) {
 }
 
 func downloadProxies() []string {
-	wgD.Add(7)
+	wgD.Add(8)
 	// http://www.freeproxylists.com
 	go func() {
 		defer wgD.Done()
@@ -310,6 +310,45 @@ func downloadProxies() []string {
 			mutex.Unlock()
 		}
 	}()
+	//blogspot.com
+	go func() {
+		defer wgD.Done()
+		var (
+			re = regexp.MustCompile(`(?m)<a href\s*=\s*['"]([^'"]*\.\w+/\d{4}/\d{2}/[^'"#]*)['"]>`)
+		)
+		domains := []string{
+			"sslproxies24.blogspot.com",
+			"proxyserverlist-24.blogspot.com",
+			"freeschoolproxy.blogspot.com",
+			"googleproxies24.blogspot.com",
+		}
+		for _, domain := range domains {
+			wgD.Add(1)
+			u := fmt.Sprintf("http://%v/", domain)
+			go func() {
+				defer wgD.Done()
+				urlList, err := get(u)
+				if err != nil {
+					return
+				}
+				for _, href := range findSubmatchRange(re, urlList) {
+					wgD.Add(1)
+					go func() {
+						defer wgD.Done()
+						ipList, err := get(href)
+						if err != nil {
+							return
+						}
+						for _, ip := range FindAllTemplate(reProxy, ipList, templateProxy) {
+							mutex.Lock()
+							proxies = append(proxies, ip)
+							mutex.Unlock()
+						}
+					}()
+				}
+			}()
+		}
+	}()
 
 	quit := make(chan int)
 	go counter(quit)
@@ -328,7 +367,7 @@ func downloadProxies() []string {
 	// clear filter and proxies
 	cf.Reset()
 	proxies = nil
-	fmt.Fprintf(os.Stderr,"\rFound %d proxies\n", len(unique))
+	fmt.Fprintf(os.Stderr, "\rFound %d proxies\n", len(unique))
 	fmt.Fprintln(os.Stderr, "\nStarting test ...")
 	return unique
 }
