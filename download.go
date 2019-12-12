@@ -50,7 +50,7 @@ func FindAllTemplate(pattern *regexp.Regexp, html string, template string) []str
 
 func get(u string) (string, error) {
 	client := &http.Client{
-		Timeout: 20 * time.Second,
+		Timeout: 60 * time.Second,
 	}
 	req, err := http.NewRequest("GET", u, nil)
 	if err != nil {

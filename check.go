@@ -119,13 +119,16 @@ func proxyCheck(addr string, bar *pb.ProgressBar) {
 			jsonBody.Proxy = addr
 			jsonBody.Transparent = true
 			jsonBody.Elite = false
-
 			if !strings.Contains(realIp, jsonBody.Headers.XRealIP) {
 				jsonBody.Transparent = false
+				inOrigin := 0
 				for _, ips := range strings.Fields(strings.ReplaceAll(jsonBody.Origin, `,`, ``)) {
 					if !strings.Contains(realIp, ips) {
-						jsonBody.Elite = true
+						inOrigin++
 					}
+				}
+				if inOrigin != 0 {
+					jsonBody.Elite = true
 				}
 			}
 			//204.48.22.103
