@@ -6,6 +6,7 @@ import (
 	"github.com/icrowley/fake"
 	cuckoo "github.com/seiflotfy/cuckoofilter"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"regexp"
@@ -50,7 +51,7 @@ func FindAllTemplate(pattern *regexp.Regexp, html string, template string) []str
 
 func get(u string) (string, error) {
 	client := &http.Client{
-		Timeout: 30 * time.Second,
+		Timeout: 20 * time.Second,
 	}
 	req, err := http.NewRequest("GET", u, nil)
 	if err != nil {
@@ -93,7 +94,7 @@ func counter(quit chan int) {
 }
 
 func downloadProxies() []string {
-	wgD.Add(9)
+	wgD.Add(10)
 	// freeproxylists.com
 	go func() {
 		defer wgD.Done()
@@ -135,8 +136,9 @@ func downloadProxies() []string {
 		defer wgD.Done()
 		var (
 			re = regexp.MustCompile(`(?m)href\s*=\s*['"]([^'"]*proxylist_at_[^'"]*)['"]`)
+			url = "https://webanetlabs.net/publ/24"
 		)
-		body, err := get("https://webanetlabs.net/publ/24")
+		body, err := get(url)
 		if err != nil {
 			return
 		}
@@ -163,8 +165,9 @@ func downloadProxies() []string {
 		defer wgD.Done()
 		var (
 			re = regexp.MustCompile(`(?m)href\s*=\s*['"](/archive/\d{4}-\d{2}-\d{2})['"]`)
+			url =  "https://checkerproxy.net/"
 		)
-		body, err := get("https://checkerproxy.net/")
+		body, err := get(url)
 		if err != nil {
 			return
 		}
@@ -191,8 +194,9 @@ func downloadProxies() []string {
 		var (
 			re       = regexp.MustCompile(`href\s*=\s*['"]\./([^'"]?index\.php\?p=\d+[^'"]*)['"]`)
 			ipBase64 = regexp.MustCompile(`Proxy\('([\w=]+)'\)`)
+			url = "http://proxy-list.org/english/index.php?p=1"
 		)
-		body, err := get("http://proxy-list.org/english/index.php?p=1")
+		body, err := get(url)
 		if err != nil {
 			return
 		}
@@ -263,8 +267,9 @@ func downloadProxies() []string {
 		var (
 			ints []int
 			re   = regexp.MustCompile(`(?m)href\s*=\s*['"][^'"]*/?page=(\d+)['"]`)
+			url = "https://proxylist.me/"
 		)
-		body, err := get("https://proxylist.me/")
+		body, err := get(url)
 		if err != nil {
 			return
 		}
@@ -315,13 +320,13 @@ func downloadProxies() []string {
 		defer wgD.Done()
 		var (
 			re = regexp.MustCompile(`(?m)<a href\s*=\s*['"]([^'"]*\.\w+/\d{4}/\d{2}/[^'"#]*)['"]>`)
+			domains = []string{
+				"sslproxies24.blogspot.com",
+				"proxyserverlist-24.blogspot.com",
+				"freeschoolproxy.blogspot.com",
+				"googleproxies24.blogspot.com",
+			}
 		)
-		domains := []string{
-			"sslproxies24.blogspot.com",
-			"proxyserverlist-24.blogspot.com",
-			"freeschoolproxy.blogspot.com",
-			"googleproxies24.blogspot.com",
-		}
 		for _, domain := range domains {
 			wgD.Add(1)
 			u := fmt.Sprintf("http://%v/", domain)
@@ -353,9 +358,10 @@ func downloadProxies() []string {
 	go func() {
 		defer wgD.Done()
 		var (
-			re = regexp.MustCompile(`href\s*=\s*['"]([^'"]?proxy_list_high_anonymous_[^'"]*)['"]`)
+			re  = regexp.MustCompile(`href\s*=\s*['"]([^'"]?proxy_list_high_anonymous_[^'"]*)['"]`)
+			url = "http://www.proxz.com/proxy_list_high_anonymous_0.html"
 		)
-		urlList, err := get("http://www.proxz.com/proxy_list_high_anonymous_0.html")
+		urlList, err := get(url)
 		if err != nil {
 			return
 		}
@@ -376,6 +382,37 @@ func downloadProxies() []string {
 			}()
 		}
 
+	}()
+	// my-proxy.com/
+	go func() {
+		defer wgD.Done()
+		var (
+			re  = regexp.MustCompile(`(?m)href\s*=\s*['"]([^'"]?free-[^'"]*)['"]`)
+			url = "https://www.my-proxy.com/free-proxy-list.html"
+		)
+
+		urlList, err := get(url)
+		if err != nil {
+			return
+		}
+		for _, href := range findSubmatchRange(re, urlList) {
+			wgD.Add(1)
+			u := fmt.Sprintf("https://www.my-proxy.com/%v", href)
+			log.Println(u)
+			go func() {
+				defer wgD.Done()
+				ipList, err := get(u)
+				if err != nil {
+					return
+				}
+				for _, ip := range FindAllTemplate(reProxy, ipList, templateProxy) {
+					mutex.Lock()
+					log.Println("bang", ip)
+					proxies = append(proxies, ip)
+					mutex.Unlock()
+				}
+			}()
+		}
 	}()
 
 	quit := make(chan int)
