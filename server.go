@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 )
 
@@ -46,7 +47,9 @@ func handler(client *redis.Client, p *goproxy.ProxyHttpServer) func(http.Respons
 			//DisableKeepAlives:   false,
 			//MaxIdleConnsPerHost: 200,
 		}
-		r.Header.Del("X-Forwarded-For")
+		//proxIp := strings.Split(strings.ReplaceAll(purl,`http://`,``),`:`)[0]
+		//r.Header.Del("X-Forwarded-For")
+		//r.Header.Set("X-Forwarded-For",proxIp)
 		p.ServeHTTP(w, r)
 	}
 }

@@ -117,6 +117,9 @@ func proxyCheck(addr string, bar *pb.ProgressBar) {
 			jsonBody.Elite = true
 			if realIp == jsonBody.Headers.XRealIP {
 				jsonBody.Transparent = true
+				if noTransparent {
+					return
+				}
 			}
 			for _, ips := range strings.Fields(strings.ReplaceAll(jsonBody.Origin, `,`, ``)) {
 				if ips == realIp {
@@ -124,9 +127,6 @@ func proxyCheck(addr string, bar *pb.ProgressBar) {
 				}
 			}
 			if eliteOnly && !jsonBody.Elite {
-				return
-			}
-			if noTransparent && jsonBody.Transparent {
 				return
 			}
 
