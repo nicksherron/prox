@@ -6,6 +6,7 @@ import (
 	"github.com/icrowley/fake"
 	cuckoo "github.com/seiflotfy/cuckoofilter"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"regexp"
@@ -13,6 +14,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -57,7 +59,7 @@ func get(u string) (string, error) {
 		return "", err
 	}
 	req.Header.Set("X-Forwarded-For", fake.IPv4())
-	req.Header.Set("User-Agent", fake.UserAgent())
+	req.Header.Set("User-Agent", `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36`)
 	resp, err := client.Do(req)
 	if err != nil {
 		return "", err
@@ -93,7 +95,7 @@ func counter(quit chan int) {
 }
 
 func downloadProxies() []string {
-	wgD.Add(11)
+	wgD.Add(13)
 	// freeproxylists.com
 	go func() {
 		defer wgD.Done()
@@ -134,7 +136,7 @@ func downloadProxies() []string {
 	go func() {
 		defer wgD.Done()
 		var (
-			re = regexp.MustCompile(`(?m)href\s*=\s*['"]([^'"]*proxylist_at_[^'"]*)['"]`)
+			re  = regexp.MustCompile(`(?m)href\s*=\s*['"]([^'"]*proxylist_at_[^'"]*)['"]`)
 			url = "https://webanetlabs.net/publ/24"
 		)
 		body, err := get(url)
@@ -163,8 +165,8 @@ func downloadProxies() []string {
 	go func() {
 		defer wgD.Done()
 		var (
-			re = regexp.MustCompile(`(?m)href\s*=\s*['"](/archive/\d{4}-\d{2}-\d{2})['"]`)
-			url =  "https://checkerproxy.net/"
+			re  = regexp.MustCompile(`(?m)href\s*=\s*['"](/archive/\d{4}-\d{2}-\d{2})['"]`)
+			url = "https://checkerproxy.net/"
 		)
 		body, err := get(url)
 		if err != nil {
@@ -193,7 +195,7 @@ func downloadProxies() []string {
 		var (
 			re       = regexp.MustCompile(`href\s*=\s*['"]\./([^'"]?index\.php\?p=\d+[^'"]*)['"]`)
 			ipBase64 = regexp.MustCompile(`Proxy\('([\w=]+)'\)`)
-			url = "http://proxy-list.org/english/index.php?p=1"
+			url      = "http://proxy-list.org/english/index.php?p=1"
 		)
 		body, err := get(url)
 		if err != nil {
@@ -266,7 +268,7 @@ func downloadProxies() []string {
 		var (
 			ints []int
 			re   = regexp.MustCompile(`(?m)href\s*=\s*['"][^'"]*/?page=(\d+)['"]`)
-			url = "https://proxylist.me/"
+			url  = "https://proxylist.me/"
 		)
 		body, err := get(url)
 		if err != nil {
@@ -318,7 +320,7 @@ func downloadProxies() []string {
 	go func() {
 		defer wgD.Done()
 		var (
-			re = regexp.MustCompile(`(?m)<a href\s*=\s*['"]([^'"]*\.\w+/\d{4}/\d{2}/[^'"#]*)['"]>`)
+			re      = regexp.MustCompile(`(?m)<a href\s*=\s*['"]([^'"]*\.\w+/\d{4}/\d{2}/[^'"#]*)['"]>`)
 			domains = []string{
 				"sslproxies24.blogspot.com",
 				"proxyserverlist-24.blogspot.com",
@@ -415,7 +417,7 @@ func downloadProxies() []string {
 	go func() {
 		defer wgD.Done()
 		var (
-			re = regexp.MustCompile(`(?ms)<td>(?P<ip>(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?))(?:.*?(?:(?:(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?))|(?P<port>\d{2,5})))</td>`)
+			re   = regexp.MustCompile(`(?ms)<td>(?P<ip>(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?))(?:.*?(?:(?:(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?))|(?P<port>\d{2,5})))</td>`)
 			urls = []string{
 				"https://list.proxylistplus.com/Fresh-HTTP-Proxy-List-1",
 				"https://list.proxylistplus.com/Fresh-HTTP-Proxy-List-2",
@@ -444,7 +446,99 @@ func downloadProxies() []string {
 			}()
 
 		}
-		
+
+	}()
+	// xseo.in
+	go func() {
+		defer wgD.Done()
+		var (
+			url = "http://xseo.in/freeproxy"
+		)
+		ipList, err := get(url)
+		if err != nil {
+			return
+		}
+		for _, ip := range findAllTemplate(reProxy, ipList, templateProxy) {
+			mutex.Lock()
+			proxies = append(proxies, ip)
+			mutex.Unlock()
+		}
+	}()
+	// free-proxy.cz
+	go func() {
+		defer wgD.Done()
+		var (
+			re             = regexp.MustCompile(`(?U)document.write\(Base64.decode\("(?P<base64>(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?)"\)\).*(?P<port>\d{2,5})</span`)
+			templateBase64 = "${base64}:${port}\n"
+			urls           []string
+			retryCount     uint64
+			retryMax       uint64
+			urlsDone       uint64
+			baseUrls       = []string{
+				"http://free-proxy.cz/en/proxylist/main",
+				"http://free-proxy.cz/en/proxylist/country/all/http/ping/all",
+				"http://free-proxy.cz/en/proxylist/country/all/https/ping/all",
+				"http://free-proxy.cz/en/proxylist/country/all/http/uptime/level1",
+				"http://free-proxy.cz/en/proxylist/country/all/https/uptime/level1",
+				"http://free-proxy.cz/en/proxylist/country/all/http/uptime/level2",
+				"http://free-proxy.cz/en/proxylist/country/all/https/uptime/level2",
+			}
+		)
+		for _, url := range baseUrls {
+			urls = append(urls, url)
+			for i := 1; i < 7; i++ {
+				u := fmt.Sprintf("%v/%v", url, i)
+				urls = append(urls, u)
+			}
+		}
+
+		retryCount = 0
+		retryMax = 15
+		urlsDone = 0
+		urlsTotal := len(urls)
+		var newWg sync.WaitGroup
+		for {
+			var remainingUrls []string
+			for _, url := range urls {
+				newWg.Add(1)
+				u := url
+				go func() {
+					log.Println(u)
+					defer newWg.Done()
+					ipList, err := get(u)
+					if err != nil {
+						return
+					}
+					if len(ipList) < 500 {
+						mutex.Lock()
+						remainingUrls = append(remainingUrls, u)
+						mutex.Unlock()
+						atomic.AddUint64(&retryCount, 1)
+						return
+					}
+					for _, encodedIp := range findAllTemplate(re, ipList, templateBase64) {
+						split := strings.Split(encodedIp, `:`)
+						if len(split) < 2 {
+							continue
+						}
+						proxyIp, err := base64.StdEncoding.DecodeString(split[0])
+						if err != nil {
+							continue
+						}
+						ip := fmt.Sprintf("http://%v:%v", string(proxyIp), split[1])
+						mutex.Lock()
+						proxies = append(proxies, ip)
+						mutex.Unlock()
+					}
+					atomic.AddUint64(&urlsDone, 1)
+				}()
+			}
+			newWg.Wait()
+			urls = remainingUrls
+			if urlsDone == uint64(urlsTotal) || retryCount >= retryMax {
+				break
+			}
+		}
 	}()
 
 	quit := make(chan int)
@@ -468,4 +562,3 @@ func downloadProxies() []string {
 	fmt.Fprintln(os.Stderr, "\nStarting test ...")
 	return unique
 }
-
