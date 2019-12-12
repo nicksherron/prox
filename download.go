@@ -93,8 +93,8 @@ func counter(quit chan int) {
 }
 
 func downloadProxies() []string {
-	wgD.Add(8)
-	// http://www.freeproxylists.com
+	wgD.Add(9)
+	// freeproxylists.com
 	go func() {
 		defer wgD.Done()
 		var (
@@ -130,7 +130,7 @@ func downloadProxies() []string {
 			}
 		}
 	}()
-	// https://webanetlabs.net
+	// webanetlabs.net
 	go func() {
 		defer wgD.Done()
 		var (
@@ -158,7 +158,7 @@ func downloadProxies() []string {
 			}()
 		}
 	}()
-	//// https://checkerproxy.net/
+	// checkerproxy.net/
 	go func() {
 		defer wgD.Done()
 		var (
@@ -185,7 +185,7 @@ func downloadProxies() []string {
 			}()
 		}
 	}()
-	//	proxy-list.org
+	// proxy-list.org
 	go func() {
 		defer wgD.Done()
 		var (
@@ -216,7 +216,7 @@ func downloadProxies() []string {
 			}()
 		}
 	}()
-	//// http://www.aliveproxy.com
+	// aliveproxy.com
 	go func() {
 		defer wgD.Done()
 		var (
@@ -257,7 +257,7 @@ func downloadProxies() []string {
 			}()
 		}
 	}()
-	// https://proxylist.me/
+	// proxylist.me/
 	go func() {
 		defer wgD.Done()
 		var (
@@ -297,7 +297,7 @@ func downloadProxies() []string {
 			}()
 		}
 	}()
-	// https://www.proxy-list.download
+	// proxy-list.download
 	go func() {
 		defer wgD.Done()
 		body, err := get("https://www.proxy-list.download/api/v1/get?type=http")
@@ -310,7 +310,7 @@ func downloadProxies() []string {
 			mutex.Unlock()
 		}
 	}()
-	//blogspot.com
+	// blogspot.com
 	go func() {
 		defer wgD.Done()
 		var (
@@ -348,6 +348,34 @@ func downloadProxies() []string {
 				}
 			}()
 		}
+	}()
+	// prox.com
+	go func() {
+		defer wgD.Done()
+		var (
+			re = regexp.MustCompile(`href\s*=\s*['"]([^'"]?proxy_list_high_anonymous_[^'"]*)['"]`)
+		)
+		urlList, err := get("http://www.proxz.com/proxy_list_high_anonymous_0.html")
+		if err != nil {
+			return
+		}
+		for _, href := range findSubmatchRange(re, urlList) {
+			wgD.Add(1)
+			u := fmt.Sprintf("http://www.proxz.com/%v", href)
+			go func() {
+				defer wgD.Done()
+				ipList, err := get(u)
+				if err != nil {
+					return
+				}
+				for _, ip := range FindAllTemplate(reProxy, ipList, templateProxy) {
+					mutex.Lock()
+					proxies = append(proxies, ip)
+					mutex.Unlock()
+				}
+			}()
+		}
+
 	}()
 
 	quit := make(chan int)
