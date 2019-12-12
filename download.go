@@ -33,7 +33,7 @@ func findSubmatchRange(regex *regexp.Regexp, str string) []string {
 	return matched
 }
 
-func FindAllTemplate(pattern *regexp.Regexp, html string, template string) []string {
+func findAllTemplate(pattern *regexp.Regexp, html string, template string) []string {
 	var (
 		results []string
 		result  []byte
@@ -93,7 +93,7 @@ func counter(quit chan int) {
 }
 
 func downloadProxies() []string {
-	wgD.Add(10)
+	wgD.Add(11)
 	// freeproxylists.com
 	go func() {
 		defer wgD.Done()
@@ -110,7 +110,7 @@ func downloadProxies() []string {
 				continue
 			}
 			template := "http://www.freeproxylists.com/load_${type}_${id}.html\n"
-			matches := FindAllTemplate(fplReID, body, template)
+			matches := findAllTemplate(fplReID, body, template)
 			for _, match := range matches {
 				wgD.Add(1)
 				go func() {
@@ -119,7 +119,7 @@ func downloadProxies() []string {
 					if err != nil {
 						return
 					}
-					matched := FindAllTemplate(reProxy, ipList, templateProxy)
+					matched := findAllTemplate(reProxy, ipList, templateProxy)
 					for _, proxy := range matched {
 						mutex.Lock()
 						proxies = append(proxies, proxy)
@@ -151,7 +151,7 @@ func downloadProxies() []string {
 				if err != nil {
 					return
 				}
-				for _, ip := range FindAllTemplate(reProxy, ipList, templateProxy) {
+				for _, ip := range findAllTemplate(reProxy, ipList, templateProxy) {
 					mutex.Lock()
 					proxies = append(proxies, ip)
 					mutex.Unlock()
@@ -159,7 +159,7 @@ func downloadProxies() []string {
 			}()
 		}
 	}()
-	// checkerproxy.net/
+	// checkerproxy.net
 	go func() {
 		defer wgD.Done()
 		var (
@@ -179,7 +179,7 @@ func downloadProxies() []string {
 				if err != nil {
 					return
 				}
-				for _, ip := range FindAllTemplate(reProxy, ipList, templateProxy) {
+				for _, ip := range findAllTemplate(reProxy, ipList, templateProxy) {
 					mutex.Lock()
 					proxies = append(proxies, ip)
 					mutex.Unlock()
@@ -252,7 +252,7 @@ func downloadProxies() []string {
 				if err != nil {
 					return
 				}
-				for _, ip := range FindAllTemplate(reProxy, ipList, templateProxy) {
+				for _, ip := range findAllTemplate(reProxy, ipList, templateProxy) {
 					mutex.Lock()
 					proxies = append(proxies, ip)
 					mutex.Unlock()
@@ -260,7 +260,7 @@ func downloadProxies() []string {
 			}()
 		}
 	}()
-	// proxylist.me/
+	// proxylist.me
 	go func() {
 		defer wgD.Done()
 		var (
@@ -293,7 +293,7 @@ func downloadProxies() []string {
 				if err != nil {
 					return
 				}
-				for _, ip := range FindAllTemplate(reProxy, ipList, templateProxy) {
+				for _, ip := range findAllTemplate(reProxy, ipList, templateProxy) {
 					mutex.Lock()
 					proxies = append(proxies, ip)
 					mutex.Unlock()
@@ -308,7 +308,7 @@ func downloadProxies() []string {
 		if err != nil {
 			return
 		}
-		for _, ip := range FindAllTemplate(reProxy, body, templateProxy) {
+		for _, ip := range findAllTemplate(reProxy, body, templateProxy) {
 			mutex.Lock()
 			proxies = append(proxies, ip)
 			mutex.Unlock()
@@ -343,7 +343,7 @@ func downloadProxies() []string {
 						if err != nil {
 							return
 						}
-						for _, ip := range FindAllTemplate(reProxy, ipList, templateProxy) {
+						for _, ip := range findAllTemplate(reProxy, ipList, templateProxy) {
 							mutex.Lock()
 							proxies = append(proxies, ip)
 							mutex.Unlock()
@@ -373,7 +373,7 @@ func downloadProxies() []string {
 				if err != nil {
 					return
 				}
-				for _, ip := range FindAllTemplate(reProxy, ipList, templateProxy) {
+				for _, ip := range findAllTemplate(reProxy, ipList, templateProxy) {
 					mutex.Lock()
 					proxies = append(proxies, ip)
 					mutex.Unlock()
@@ -382,7 +382,7 @@ func downloadProxies() []string {
 		}
 
 	}()
-	// my-proxy.com/
+	// my-proxy.com
 	go func() {
 		defer wgD.Done()
 		var (
@@ -403,13 +403,48 @@ func downloadProxies() []string {
 				if err != nil {
 					return
 				}
-				for _, ip := range FindAllTemplate(reProxy, ipList, templateProxy) {
+				for _, ip := range findAllTemplate(reProxy, ipList, templateProxy) {
 					mutex.Lock()
 					proxies = append(proxies, ip)
 					mutex.Unlock()
 				}
 			}()
 		}
+	}()
+	// list.proxylistplus.com
+	go func() {
+		defer wgD.Done()
+		var (
+			re = regexp.MustCompile(`(?ms)<td>(?P<ip>(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?))(?:.*?(?:(?:(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?))|(?P<port>\d{2,5})))</td>`)
+			urls = []string{
+				"https://list.proxylistplus.com/Fresh-HTTP-Proxy-List-1",
+				"https://list.proxylistplus.com/Fresh-HTTP-Proxy-List-2",
+				"https://list.proxylistplus.com/Fresh-HTTP-Proxy-List-3",
+				"https://list.proxylistplus.com/Fresh-HTTP-Proxy-List-4",
+				"https://list.proxylistplus.com/Fresh-HTTP-Proxy-List-5",
+				"https://list.proxylistplus.com/Fresh-HTTP-Proxy-List-6",
+				"https://list.proxylistplus.com/ssl-List-1",
+				"https://list.proxylistplus.com/ssl-List-2",
+			}
+		)
+		for _, url := range urls {
+			wgD.Add(1)
+			u := url
+			go func() {
+				defer wgD.Done()
+				ipList, err := get(u)
+				if err != nil {
+					return
+				}
+				for _, ip := range findAllTemplate(re, ipList, templateProxy) {
+					mutex.Lock()
+					proxies = append(proxies, ip)
+					mutex.Unlock()
+				}
+			}()
+
+		}
+		
 	}()
 
 	quit := make(chan int)
@@ -433,3 +468,4 @@ func downloadProxies() []string {
 	fmt.Fprintln(os.Stderr, "\nStarting test ...")
 	return unique
 }
+
