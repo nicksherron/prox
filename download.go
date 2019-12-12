@@ -6,7 +6,6 @@ import (
 	"github.com/icrowley/fake"
 	cuckoo "github.com/seiflotfy/cuckoofilter"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 	"regexp"
@@ -503,7 +502,6 @@ func downloadProxies() []string {
 				newWg.Add(1)
 				u := url
 				go func() {
-					log.Println(u)
 					defer newWg.Done()
 					ipList, err := get(u)
 					if err != nil {
