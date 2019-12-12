@@ -125,9 +125,12 @@ func proxyCheck(addr string, bar *pb.ProgressBar) {
 			for _, ips := range strings.Fields(strings.ReplaceAll(jsonBody.Origin, `,`, ``)) {
 				if ips == realIp {
 					jsonBody.Elite = false
-					//inOrigin++
 				}
 			}
+			if eliteOnly && !jsonBody.Elite {
+				return
+			}
+
 			var results interface{}
 			if !showRequest {
 				out := make(map[string]interface{})
@@ -138,6 +141,7 @@ func proxyCheck(addr string, bar *pb.ProgressBar) {
 			} else {
 				results = &jsonBody
 			}
+
 			b, err := json.MarshalIndent(results, ``, `   `)
 			check(err)
 			atomic.AddUint64(&goodCount, 1)

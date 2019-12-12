@@ -29,6 +29,7 @@ var (
 	urls         []string
 	showRequest  bool
 	serveProxies bool
+	eliteOnly bool
 )
 
 func main() {
@@ -114,6 +115,12 @@ AUTHOR:
 				Value:       false,
 				Usage:       "Serve proxies after checking",
 				Destination: &serveProxies,
+			},
+			&cli.BoolFlag{
+				Name:        "elite",
+				Value:       false,
+				Usage:       "Only use fully anonymous proxies. Only works if using default test url",
+				Destination: &eliteOnly,
 			},
 		},
 		Action: func(c *cli.Context) error {
