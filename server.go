@@ -40,7 +40,6 @@ func handler(client *redis.Client, p *goproxy.ProxyHttpServer) func(http.Respons
 		}
 		p.Tr = &http.Transport{
 			Proxy: http.ProxyURL(proxyUrl),
-			ForceAttemptHTTP2:     false,
 			//Dial: (&net.Dialer{
 			//	Timeout: 15 * time.Second,
 			//}).Dial,
