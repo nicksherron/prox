@@ -7,6 +7,7 @@ import (
 	"github.com/cheggaaa/pb/v3"
 	"github.com/icrowley/fake"
 	"io/ioutil"
+	"log"
 	"net"
 	"net/http"
 	"net/url"
@@ -95,6 +96,7 @@ func proxyCheck(addr string, bar *pb.ProgressBar) {
 	req.Header.Set("X-Forwarded-For", fake.IPv4())
 	req.Header.Set("User-Agent", fake.UserAgent())
 	resp, err := client.Do(req)
+	defer resp.Body.Close()
 	if err != nil {
 		if strings.Contains(err.Error(), "Client.Timeout") {
 			atomic.AddUint64(&toCount, 1)
@@ -115,14 +117,18 @@ func proxyCheck(addr string, bar *pb.ProgressBar) {
 			err = json.Unmarshal(body, &jsonBody)
 			check(err)
 			jsonBody.Proxy = addr
-			jsonBody.Transparent = false
+			jsonBody.Transparent = true
 			jsonBody.Elite = false
+
 			if !strings.Contains(realIp, jsonBody.Headers.XRealIP) {
-				jsonBody.Transparent = true
-				if !strings.Contains(realIp,jsonBody.Origin){
-					jsonBody.Elite = true
+				jsonBody.Transparent = false
+				for _, ips := range strings.Fields(strings.ReplaceAll(jsonBody.Origin, `,`, ``)) {
+					if !strings.Contains(realIp, ips) {
+						jsonBody.Elite = true
+					}
 				}
 			}
+			//204.48.22.103
 			b, err := json.MarshalIndent(&jsonBody, ``, `   `)
 			check(err)
 			atomic.AddUint64(&goodCount, 1)
@@ -142,7 +148,7 @@ func proxyCheck(addr string, bar *pb.ProgressBar) {
 func checkInit(addresses []string) {
 	realIp = hostIp()
 	fmt.Fprintln(os.Stderr,`Host ip identified as `,realIp)
-	//log.SetOutput(nil)
+	log.SetOutput(nil)
 	start := time.Now()
 	counter := 0
 	bar := pb.ProgressBarTemplate(barTemplate).Start(len(addresses)).SetMaxWidth(80)
@@ -175,4 +181,5 @@ func checkInit(addresses []string) {
 	_, _ = fmt.Fprintf(os.Stderr,
 		"\nGood:\t%v\tBad:\t%v\tTimed out:\t%v\tTook:\t%v\t\n\n",
 		goodCount, badCount, toCount, done)
+	log.SetOutput(os.Stderr)
 }
