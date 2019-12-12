@@ -6,7 +6,6 @@ import (
 	"github.com/icrowley/fake"
 	cuckoo "github.com/seiflotfy/cuckoofilter"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 	"regexp"
@@ -398,7 +397,6 @@ func downloadProxies() []string {
 		for _, href := range findSubmatchRange(re, urlList) {
 			wgD.Add(1)
 			u := fmt.Sprintf("https://www.my-proxy.com/%v", href)
-			log.Println(u)
 			go func() {
 				defer wgD.Done()
 				ipList, err := get(u)
@@ -407,7 +405,6 @@ func downloadProxies() []string {
 				}
 				for _, ip := range FindAllTemplate(reProxy, ipList, templateProxy) {
 					mutex.Lock()
-					log.Println("bang", ip)
 					proxies = append(proxies, ip)
 					mutex.Unlock()
 				}
