@@ -27,16 +27,13 @@ var (
 	workers int
 	testUrl string
 	urls    []string
+	showRequest bool
 )
 
 func main() {
 
 	cli.AppHelpTemplate = `NAME:
    {{.Name}} - {{.Usage}}
-   {{if len .Authors}}
-AUTHOR:
-   {{range .Authors}}{{ . }}{{end}}
-   {{end}}
 {{if .VisibleFlags}}
 OPTIONS:
    {{range .VisibleFlags}}{{.}}
@@ -46,6 +43,10 @@ COPYRIGHT:
    {{end}}{{if .Version}}
 VERSION:
    {{.Version}}
+   {{end}}
+   {{if len .Authors}}
+AUTHOR:
+   {{range .Authors}}{{ . }}{{end}}
    {{end}}
 `
 
@@ -100,6 +101,12 @@ VERSION:
 				Value:       "http://httpbin.org/get?show_env",
 				Usage:       "The url to test proxies against.",
 				Destination: &testUrl,
+			},
+			&cli.BoolFlag{
+				Name:        "show-response",
+				Value:       false,
+				Usage:       "If using default httpbin.org test url, add http response body to return results.",
+				Destination: &showRequest,
 			},
 		},
 		Action: func(c *cli.Context) error {

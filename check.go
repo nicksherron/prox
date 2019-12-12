@@ -35,6 +35,7 @@ type HttpBin struct {
 	Proxy       string `json:"proxy"`
 	Transparent bool   `json:"transparent"`
 	Elite       bool   `json:"elite"`
+	//Speed string `json:"speed"`
 }
 
 var (
@@ -120,9 +121,6 @@ func proxyCheck(addr string, bar *pb.ProgressBar) {
 			jsonBody.Elite = true
 			if realIp == jsonBody.Headers.XRealIP {
 				jsonBody.Transparent = true
-				fmt.Fprintln(os.Stderr, realIp, addr, jsonBody.Headers.XRealIP)
-
-				//inOrigin := 0
 			}
 			for _, ips := range strings.Fields(strings.ReplaceAll(jsonBody.Origin, `,`, ``)) {
 				if ips == realIp {
@@ -130,12 +128,17 @@ func proxyCheck(addr string, bar *pb.ProgressBar) {
 					//inOrigin++
 				}
 			}
-			//if inOrigin != 0 {
-			//	jsonBody.Elite = false
-			//}
-
-			//204.48.22.103
-			b, err := json.MarshalIndent(&jsonBody, ``, `   `)
+			var results interface{}
+			if !showRequest {
+				out := make(map[string]interface{})
+				out["proxy"] = jsonBody.Proxy
+				out["transparent"] = jsonBody.Transparent
+				out["elite"]= jsonBody.Elite
+				results = out
+			}else {
+				results = &jsonBody
+			}
+			b, err := json.MarshalIndent(results, ``, `   `)
 			check(err)
 			atomic.AddUint64(&goodCount, 1)
 			mutex.Lock()
