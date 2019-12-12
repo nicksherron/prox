@@ -88,8 +88,6 @@ func proxyCheck(addr string, bar *pb.ProgressBar) {
 	}
 	req, err := http.NewRequest("GET", testUrl, nil)
 	check(err)
-	req.Header.Set("Accept", "application/json")
-	req.Header.Set("X-Forwarded-For", fake.IPv4())
 	req.Header.Set("User-Agent", fake.UserAgent())
 	resp, err := client.Do(req)
 	defer resp.Body.Close()
