@@ -20,14 +20,15 @@ func check(e error) {
 }
 
 var (
-	outFile string
-	noCheck bool
-	limit   uint64
-	timeout time.Duration
-	workers int
-	testUrl string
-	urls    []string
-	showRequest bool
+	outFile      string
+	noCheck      bool
+	limit        uint64
+	timeout      time.Duration
+	workers      int
+	testUrl      string
+	urls         []string
+	showRequest  bool
+	serveProxies bool
 )
 
 func main() {
@@ -108,6 +109,12 @@ AUTHOR:
 				Usage:       "If using default httpbin.org test url, add http response body to return results.",
 				Destination: &showRequest,
 			},
+			&cli.BoolFlag{
+				Name:        "serve",
+				Value:       false,
+				Usage:       "Serve proxies after checking",
+				Destination: &serveProxies,
+			},
 		},
 		Action: func(c *cli.Context) error {
 			go func() {
@@ -124,20 +131,30 @@ AUTHOR:
 					_, _ = fmt.Fprintln(os.Stderr, "no good proxies found")
 					return nil
 				}
-			}
-
-			if !noCheck {
 				if outFile != "" {
 					g, err := os.Create(outFile)
 					check(err)
 					defer g.Close()
-
-					for _, v := range good {
-						fmt.Fprintln(g, v)
+					if len(jsonProxies) != 0 {
+						for _, v := range jsonProxies {
+							fmt.Fprintln(g, v)
+						}
+					}else {
+						for _, v := range good {
+							fmt.Fprintln(g, v)
+						}
 					}
+				}else if serveProxies{
+					serve(good)
 				} else {
-					for _, v := range good {
-						fmt.Println(v)
+					if len(jsonProxies) != 0 {
+						for _, v := range jsonProxies {
+							fmt.Println(v)
+						}
+					}else {
+						for _, v := range good {
+							fmt.Println(v)
+						}
 					}
 				}
 			} else {
@@ -148,6 +165,8 @@ AUTHOR:
 					for _, v := range proxies {
 						fmt.Fprintln(g, v)
 					}
+				}else if serveProxies{
+					serve(proxies)
 				} else {
 					for _, v := range proxies {
 						fmt.Println(v)

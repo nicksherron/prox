@@ -40,6 +40,7 @@ type HttpBin struct {
 
 var (
 	wgC         sync.WaitGroup
+	jsonProxies []string
 	good        []string
 	mutex       = &sync.Mutex{}
 	goodCount   uint64
@@ -133,16 +134,17 @@ func proxyCheck(addr string, bar *pb.ProgressBar) {
 				out := make(map[string]interface{})
 				out["proxy"] = jsonBody.Proxy
 				out["transparent"] = jsonBody.Transparent
-				out["elite"]= jsonBody.Elite
+				out["elite"] = jsonBody.Elite
 				results = out
-			}else {
+			} else {
 				results = &jsonBody
 			}
 			b, err := json.MarshalIndent(results, ``, `   `)
 			check(err)
 			atomic.AddUint64(&goodCount, 1)
 			mutex.Lock()
-			good = append(good, string(b))
+			jsonProxies = append(jsonProxies, string(b))
+			good = append(good, addr)
 			mutex.Unlock()
 		} else {
 			atomic.AddUint64(&goodCount, 1)
