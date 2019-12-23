@@ -95,7 +95,7 @@ AUTHOR:
 			&cli.IntFlag{
 				Name:        "workers",
 				Aliases:     []string{"w"},
-				Value:       20,
+				Value:       50,
 				Usage:       "Number of (goroutines) concurrent requests to make for checking proxies.",
 				Destination: &workers,
 			},
@@ -114,6 +114,7 @@ AUTHOR:
 			},
 			&cli.BoolFlag{
 				Name:        "serve",
+				Aliases:     []string{"s"},
 				Value:       false,
 				Usage:       "Run rotating proxy server after downloading and checkout proxies.",
 				Destination: &serveProxies,

@@ -13,7 +13,6 @@ var (
 )
 
 func serve(proxyQueue []string) {
-
 	queue = proxyQueue
 	proxy := goproxy.NewProxyHttpServer()
 	proxy.Verbose = true
