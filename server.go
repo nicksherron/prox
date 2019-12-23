@@ -2,34 +2,33 @@ package main
 
 import (
 	"github.com/elazarl/goproxy"
-	"github.com/go-redis/redis/v7"
 	"log"
 	"net/http"
 	"net/url"
 	"strings"
-	"time"
+)
+
+var (
+	queue []string
 )
 
 func serve(proxyQueue []string) {
-	client := redis.NewClient(&redis.Options{
-		Addr: "localhost:6379",
-		DB:   5,
-	})
-	client.Del("proxy")
-	for _, v := range proxyQueue {
-		client.RPush("proxy", v)
-	}
+
+	queue = proxyQueue
 	proxy := goproxy.NewProxyHttpServer()
 	proxy.Verbose = true
-	http.HandleFunc("/", handler(client, proxy))
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	http.HandleFunc("/", handler(proxy))
+	log.Println("starting proxy server and listening at ", serverAddr)
+	log.Fatal(http.ListenAndServe(serverAddr, nil))
 }
-func handler(client *redis.Client, p *goproxy.ProxyHttpServer) func(http.ResponseWriter, *http.Request) {
+
+func handler(p *goproxy.ProxyHttpServer) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		purl, err := client.BRPopLPush("proxy", "proxy", 1*time.Second).Result()
-		if err != nil {
-			log.Fatal(err)
-		}
+		var purl string
+		mutex.Lock()
+		purl, queue = queue[0], queue[1:]
+		queue = append(queue, purl)
+		mutex.Unlock()
 		log.Println(purl)
 		proxyUrl, err := url.Parse(purl)
 		if err != nil {
@@ -38,9 +37,9 @@ func handler(client *redis.Client, p *goproxy.ProxyHttpServer) func(http.Respons
 		p.Tr = &http.Transport{
 			Proxy: http.ProxyURL(proxyUrl),
 		}
-		proxIp := strings.Split(strings.ReplaceAll(purl,`http://`,``),`:`)[0]
+		proxIp := strings.Split(strings.ReplaceAll(purl, `http://`, ``), `:`)[0]
 		//r.Header.Del("X-Forwarded-For")
-		r.Header.Set("X-Forwarded-For",proxIp)
+		r.Header.Set("X-Forwarded-For", proxIp)
 		p.ServeHTTP(w, r)
 	}
 }

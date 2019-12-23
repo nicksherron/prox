@@ -31,6 +31,7 @@ var (
 	serveProxies bool
 	eliteOnly bool
 	noTransparent bool
+	serverAddr string
 )
 
 func main() {
@@ -114,8 +115,15 @@ AUTHOR:
 			&cli.BoolFlag{
 				Name:        "serve",
 				Value:       false,
-				Usage:       "Serve proxies after checking",
+				Usage:       "Run rotating proxy server after downloading and checkout proxies.",
 				Destination: &serveProxies,
+			},
+			&cli.StringFlag{
+				Name:        "addr",
+				Aliases:     []string{"a"},
+				Value:       "0.0.0.0:8888",
+				Usage:       "Address to use for rotating proxy server.",
+				Destination: &serverAddr,
 			},
 			&cli.BoolFlag{
 				Name:        "elite",
