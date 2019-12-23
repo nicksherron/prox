@@ -162,6 +162,7 @@ func proxyCheck(addr string, bar *pb.ProgressBar) {
 		atomic.AddUint64(&badCount, 1)
 	}
 }
+
 func checkInit(addresses []string) {
 	realIp = hostIp()
 	start := time.Now()
