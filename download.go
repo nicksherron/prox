@@ -13,7 +13,6 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"sync/atomic"
 	"time"
 )
 
@@ -470,9 +469,6 @@ func downloadProxies() []string {
 			re             = regexp.MustCompile(`(?U)document.write\(Base64.decode\("(?P<base64>(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?)"\)\).*(?P<port>\d{2,5})</span`)
 			templateBase64 = "${base64}:${port}\n"
 			urls           []string
-			retryCount     uint64
-			retryMax       uint64
-			urlsDone       uint64
 			baseUrls       = []string{
 				"http://free-proxy.cz/en/proxylist/main",
 				"http://free-proxy.cz/en/proxylist/country/all/http/ping/all",
@@ -490,52 +486,33 @@ func downloadProxies() []string {
 				urls = append(urls, u)
 			}
 		}
-
-		retryCount = 0
-		retryMax = 15
-		urlsDone = 0
-		urlsTotal := len(urls)
-		var newWg sync.WaitGroup
-		for {
-			var remainingUrls []string
-			for _, url := range urls {
-				newWg.Add(1)
-				u := url
-				go func() {
-					defer newWg.Done()
-					ipList, err := get(u)
+		for _, url := range urls {
+			wgD.Add(1)
+			u := url
+			go func() {
+				defer wgD.Done()
+				ipList, err := get(u)
+				if err != nil {
+					return
+				}
+				if len(ipList) < 500 {
+					return
+				}
+				for _, encodedIp := range findAllTemplate(re, ipList, templateBase64) {
+					split := strings.Split(encodedIp, `:`)
+					if len(split) < 2 {
+						continue
+					}
+					proxyIp, err := base64.StdEncoding.DecodeString(split[0])
 					if err != nil {
-						return
+						continue
 					}
-					if len(ipList) < 500 {
-						mutex.Lock()
-						remainingUrls = append(remainingUrls, u)
-						mutex.Unlock()
-						atomic.AddUint64(&retryCount, 1)
-						return
-					}
-					for _, encodedIp := range findAllTemplate(re, ipList, templateBase64) {
-						split := strings.Split(encodedIp, `:`)
-						if len(split) < 2 {
-							continue
-						}
-						proxyIp, err := base64.StdEncoding.DecodeString(split[0])
-						if err != nil {
-							continue
-						}
-						ip := fmt.Sprintf("http://%v:%v", string(proxyIp), split[1])
-						mutex.Lock()
-						proxies = append(proxies, ip)
-						mutex.Unlock()
-					}
-					atomic.AddUint64(&urlsDone, 1)
-				}()
-			}
-			newWg.Wait()
-			urls = remainingUrls
-			if urlsDone == uint64(urlsTotal) || retryCount >= retryMax {
-				break
-			}
+					ip := fmt.Sprintf("http://%v:%v", string(proxyIp), split[1])
+					mutex.Lock()
+					proxies = append(proxies, ip)
+					mutex.Unlock()
+				}
+			}()
 		}
 	}()
 
