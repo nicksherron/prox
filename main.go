@@ -20,23 +20,20 @@ func check(e error) {
 }
 
 var (
-	outFile string
-	noCheck bool
-	limit   uint64
-	timeout time.Duration
-	workers int
-	testUrl string
-	urls    []string
+	outFile  string
+	noCheck  bool
+	limit    uint64
+	timeout  time.Duration
+	deadline int
+	workers  int
+	testUrl  string
+	urls     []string
 )
 
 func main() {
 
 	cli.AppHelpTemplate = `NAME:
    {{.Name}} - {{.Usage}}
-   {{if len .Authors}}
-AUTHOR:
-   {{range .Authors}}{{ . }}{{end}}
-   {{end}}
 {{if .VisibleFlags}}
 OPTIONS:
    {{range .VisibleFlags}}{{.}}
@@ -44,6 +41,10 @@ OPTIONS:
 COPYRIGHT:
    {{.Copyright}}
    {{end}}{{if .Version}}
+{{if len .Authors}}
+AUTHOR:
+   {{range .Authors}}{{ . }}{{end}}
+   {{end}}
 VERSION:
    {{.Version}}
    {{end}}
@@ -79,6 +80,13 @@ VERSION:
 				Value:       0,
 				Usage:       "Limit number of good proxies to check before completing.",
 				Destination: &limit,
+			},
+			&cli.IntFlag{
+				Name:        "deadline",
+				Aliases:     []string{"d"},
+				Value:       0,
+				Usage:       "deadline time for downloads in seconds. Default is 0 which is no deadline.",
+				Destination: &deadline,
 			},
 			&cli.DurationFlag{
 				Name:        "timeout",
