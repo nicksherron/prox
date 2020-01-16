@@ -51,7 +51,7 @@ VERSION:
 `
 
 	app := &cli.App{
-		Version: "v1.3.1",
+		Version: "v1.3.2",
 		Authors: []*cli.Author{
 			&cli.Author{
 				Name:  "Nick Sherron",
