@@ -51,7 +51,7 @@ VERSION:
 `
 
 	app := &cli.App{
-		Version: "v1.3.2",
+		Version: "v1.3.3",
 		Authors: []*cli.Author{
 			&cli.Author{
 				Name:  "Nick Sherron",
@@ -84,8 +84,8 @@ VERSION:
 			&cli.IntFlag{
 				Name:        "deadline",
 				Aliases:     []string{"d"},
-				Value:       0,
-				Usage:       "deadline time for downloads in seconds. Default is 0 which is no deadline.",
+				Value:       60,
+				Usage:       "Deadline time for downloads in seconds. Set to 0 if you don't want any deadline.",
 				Destination: &deadline,
 			},
 			&cli.DurationFlag{
