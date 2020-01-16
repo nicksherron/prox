@@ -5,12 +5,9 @@ import (
 	"github.com/icrowley/fake"
 	cuckoo "github.com/seiflotfy/cuckoofilter"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 	"regexp"
-	"sort"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -115,9 +112,9 @@ func downloadProxies() []string {
 	//		matches := findAllTemplate(fplReID, body, template)
 	//		for _, match := range matches {
 	//			w.Add(1)
-	//			ipList, err := get(match)
-	//			go func() {
+	//			go func(endpoint string) {
 	//				defer w.Done()
+	//				ipList, err := get(endpoint)
 	//				if err != nil {
 	//					return
 	//				}
@@ -127,7 +124,7 @@ func downloadProxies() []string {
 	//					proxies = append(proxies, proxy)
 	//					mutex.Unlock()
 	//				}
-	//			}()
+	//			}(match)
 	//		}
 	//		w.Wait()
 	//	}
@@ -146,11 +143,10 @@ func downloadProxies() []string {
 	//	}
 	//	for _, href := range findSubmatchRange(re, body) {
 	//		w.Add(1)
-	//		// https://webanetlabs.net/freeproxyweb/proxylist_at_02.11.2019.txt
-	//		u := "https://webanetlabs.net" + href
-	//		go func() {
+	//		go func(page string) {
 	//			defer w.Done()
-	//
+	//			// https://webanetlabs.net/freeproxyweb/proxylist_at_02.11.2019.txt
+	//			u := "https://webanetlabs.net" + page
 	//			ipList, err := get(u)
 	//			if err != nil {
 	//				return
@@ -160,7 +156,7 @@ func downloadProxies() []string {
 	//				proxies = append(proxies, ip)
 	//				mutex.Unlock()
 	//			}
-	//		}()
+	//		}(href)
 	//	}
 	//	w.Wait()
 	//}()
@@ -168,6 +164,7 @@ func downloadProxies() []string {
 	//go func() {
 	//	defer wgD.Done()
 	//	var (
+	//		w sync.WaitGroup
 	//		re  = regexp.MustCompile(`(?m)href\s*=\s*['"](/archive/\d{4}-\d{2}-\d{2})['"]`)
 	//		url = "https://checkerproxy.net/"
 	//	)
@@ -176,10 +173,10 @@ func downloadProxies() []string {
 	//		return
 	//	}
 	//	for _, href := range findSubmatchRange(re, body) {
-	//		wgD.Add(1)
-	//		go func() {
-	//			defer wgD.Done()
-	//			u := "https://checkerproxy.net/api" + href
+	//		w.Add(1)
+	//		go func(endpoint string) {
+	//			defer w.Done()
+	//			u := "https://checkerproxy.net/api" + endpoint
 	//			ipList, err := get(u)
 	//			if err != nil {
 	//				return
@@ -189,22 +186,22 @@ func downloadProxies() []string {
 	//				proxies = append(proxies, ip)
 	//				mutex.Unlock()
 	//			}
-	//		}()
+	//		}(href)
 	//	}
+	//	w.Wait()
 	//}()
-	// proxy-list.org tested:  1/16/20 found: 140
+	// proxy-list.org tested:  1/16/20 found: 83
 	//go func() {
 	//	defer wgD.Done()
 	//	var (
 	//		ipBase64 = regexp.MustCompile(`Proxy\('([\w=]+)'\)`)
 	//		w sync.WaitGroup
 	//	)
+	//	w.Add(10)
 	//	for i := 1; i < 11; i++ {
-	//		w.Add(1)
-	//		u := fmt.Sprintf("http://proxy-list.org/english/index.php?p=%v", i)
-	//		log.Println(u)
-	//		func() {
+	//		go func(page int) {
 	//			defer w.Done()
+	//			u := fmt.Sprintf("http://proxy-list.org/english/index.php?p=%v", page)
 	//			ipList, err := get(u)
 	//			if err != nil {
 	//				return
@@ -213,16 +210,15 @@ func downloadProxies() []string {
 	//				decoded, err := base64.StdEncoding.DecodeString(match)
 	//				check(err)
 	//				ip := fmt.Sprintf("http://%v", string(decoded))
-	//				log.Println(ip)
 	//				mutex.Lock()
 	//				proxies = append(proxies, ip)
 	//				mutex.Unlock()
 	//			}
-	//		}()
+	//		}(i)
 	//	}
 	//	w.Wait()
 	//}()
-	// aliveproxy.com 1/16/20 found: 73
+	// aliveproxy.com 1/16/20 found: 367
 	//go func() {
 	//	defer wgD.Done()
 	//	var (
@@ -250,8 +246,55 @@ func downloadProxies() []string {
 	//	for _, href := range suffixes {
 	//		w.Add(1)
 	//		u := fmt.Sprintf("http://www.aliveproxy.com/%v/", href)
-	//		go func() {
+	//		go func(endpoint string) {
 	//			defer w.Done()
+	//			ipList, err := get(endpoint)
+	//			if err != nil {
+	//				return
+	//			}
+	//			for _, ip := range findAllTemplate(reProxy, ipList, templateProxy) {
+	//				mutex.Lock()
+	//				proxies = append(proxies, ip)
+	//				mutex.Unlock()
+	//			}
+	//		}(u)
+	//	}
+	//	w.Wait()
+	//}()
+	//proxylist.me tested:  1/16/20 found: 23118/24000
+	//go func() {
+	//	defer wgD.Done()
+	//	var (
+	//		w    sync.WaitGroup
+	//		ints []int
+	//		re   = regexp.MustCompile(`(?m)href\s*=\s*['"][^'"]*/?page=(\d+)['"]`)
+	//		url  = "https://proxylist.me/"
+	//	)
+	//	body, err := get(url)
+	//	if err != nil {
+	//		return
+	//	}
+	//	for _, href := range findSubmatchRange(re, body) {
+	//		i, err := strconv.Atoi(href)
+	//		if err != nil {
+	//			continue
+	//		}
+	//		ints = append(ints, i)
+	//	}
+	//	if len(ints) == 0 {
+	//		return
+	//	}
+	//	sort.Ints(ints)
+	//	largest := ints[len(ints)-1]
+	//	largest++
+	//	counter := 0
+	//	for i := 1; i < largest; i++ {
+	//		w.Add(1)
+	//		counter++
+	//		go func(page int) {
+	//			defer w.Done()
+	//			u := fmt.Sprintf("https://proxylist.me/?page=%v", page)
+	//			log.Println(u)
 	//			ipList, err := get(u)
 	//			if err != nil {
 	//				return
@@ -261,60 +304,15 @@ func downloadProxies() []string {
 	//				proxies = append(proxies, ip)
 	//				mutex.Unlock()
 	//			}
-	//		}()
+	//		}(i)
+	//		// only 25 goroutines at a time. (1170 urls to get)
+	//		if counter >= 25 {
+	//			w.Wait()
+	//			counter = 0
+	//		}
 	//	}
 	//	w.Wait()
 	//}()
-	//proxylist.me tested:  1/16/20 found: 0
-	go func() {
-		defer wgD.Done()
-		var (
-			w    sync.WaitGroup
-			ints []int
-			re   = regexp.MustCompile(`(?m)href\s*=\s*['"][^'"]*/?page=(\d+)['"]`)
-			url  = "https://proxylist.me/"
-		)
-		body, err := get(url)
-		if err != nil {
-			return
-		}
-		for _, href := range findSubmatchRange(re, body) {
-			i, err := strconv.Atoi(href)
-			if err != nil {
-				continue
-			}
-			ints = append(ints, i)
-		}
-		if len(ints) == 0 {
-			return
-		}
-		sort.Ints(ints)
-		largest := ints[len(ints)-1]
-		counter := 0
-		for i := 0; i < largest; i++ {
-			w.Add(1)
-			counter++
-			go func(i int) {
-				defer w.Done()
-				u := fmt.Sprintf("https://proxylist.me/?page=%v", i)
-				log.Println(u)
-				ipList, err := get(u)
-				if err != nil {
-					return
-				}
-				for _, ip := range findAllTemplate(reProxy, ipList, templateProxy) {
-					mutex.Lock()
-					proxies = append(proxies, ip)
-					mutex.Unlock()
-				}
-			}(i)
-			if counter >= 50 {
-				w.Wait()
-				counter = 0
-			}
-		}
-		w.Wait()
-	}()
 	// proxy-list.download tested:  1/16/20 found: 0
 	//go func() {
 	//	defer wgD.Done()
@@ -343,8 +341,8 @@ func downloadProxies() []string {
 	//	)
 	//	for _, domain := range domains {
 	//		w.Add(1)
-	//		u := fmt.Sprintf("http://%v/", domain)
-	//		go func() {
+	//		go func(endpoint string) {
+	//			u := fmt.Sprintf("http://%v/", endpoint)
 	//			defer w.Done()
 	//			urlList, err := get(u)
 	//			if err != nil {
@@ -352,28 +350,28 @@ func downloadProxies() []string {
 	//			}
 	//			for _, href := range findSubmatchRange(re, urlList) {
 	//				w.Add(1)
-	//				ipList, err := get(href)
-	//				if err != nil {
-	//					continue
-	//				}
-	//				go func() {
+	//				go func(endpoint string) {
+	//					ipList, err := get(endpoint)
+	//					if err != nil {
+	//						return
+	//					}
 	//					defer w.Done()
 	//					for _, ip := range findAllTemplate(reProxy, ipList, templateProxy) {
 	//						mutex.Lock()
 	//						proxies = append(proxies, ip)
 	//						mutex.Unlock()
 	//					}
-	//				}()
+	//				}(href)
 	//			}
-	//		}()
+	//		}(domain)
 	//	}
 	//	w.Wait()
 	//}()
-	// prox.com
+	// prox.com tested:  1/16/20 found: 25
 	//go func() {
 	//	defer wgD.Done()
 	//	var (
-	//		w sync.WaitGroup
+	//		w   sync.WaitGroup
 	//		re  = regexp.MustCompile(`href\s*=\s*['"]([^'"]?proxy_list_high_anonymous_[^'"]*)['"]`)
 	//		url = "http://www.proxz.com/proxy_list_high_anonymous_0.html"
 	//	)
@@ -383,51 +381,53 @@ func downloadProxies() []string {
 	//	}
 	//	for _, href := range findSubmatchRange(re, urlList) {
 	//		w.Add(1)
-	//		u := fmt.Sprintf("http://www.proxz.com/%v", href)
-	//		ipList, err := get(u)
-	//		if err != nil {
-	//			continue
-	//		}
-	//		go func() {
+	//		go func(endpoint string) {
+	//			u := fmt.Sprintf("http://www.proxz.com/%v", endpoint)
+	//			ipList, err := get(u)
+	//			if err != nil {
+	//				return
+	//			}
 	//			defer w.Done()
 	//			for _, ip := range findAllTemplate(reProxy, ipList, templateProxy) {
 	//				mutex.Lock()
 	//				proxies = append(proxies, ip)
 	//				mutex.Unlock()
 	//			}
-	//		}()
+	//		}(href)
 	//	}
 	//	w.Wait()
 	//}()
-	// my-proxy.com
-	//go func() {
-	//	defer wgD.Done()
-	//	var (
-	//		re  = regexp.MustCompile(`(?m)href\s*=\s*['"]([^'"]?free-[^'"]*)['"]`)
-	//		url = "https://www.my-proxy.com/free-proxy-list.html"
-	//	)
-	//
-	//	urlList, err := get(url)
-	//	if err != nil {
-	//		return
-	//	}
-	//	for _, href := range findSubmatchRange(re, urlList) {
-	//		wgD.Add(1)
-	//		u := fmt.Sprintf("https://www.my-proxy.com/%v", href)
-	//		go func() {
-	//			defer wgD.Done()
-	//			ipList, err := get(u)
-	//			if err != nil {
-	//				return
-	//			}
-	//			for _, ip := range findAllTemplate(reProxy, ipList, templateProxy) {
-	//				mutex.Lock()
-	//				proxies = append(proxies, ip)
-	//				mutex.Unlock()
-	//			}
-	//		}()
-	//	}
-	//}()
+	// my-proxy.com tested:  1/16/20 found: 1026
+	go func() {
+		defer wgD.Done()
+		var (
+			w sync.WaitGroup
+			re  = regexp.MustCompile(`(?m)href\s*=\s*['"]([^'"]?free-[^'"]*)['"]`)
+			url = "https://www.my-proxy.com/free-proxy-list.html"
+		)
+
+		urlList, err := get(url)
+		if err != nil {
+			return
+		}
+		for _, href := range findSubmatchRange(re, urlList) {
+			w.Add(1)
+			go func(endpoint string) {
+				u := fmt.Sprintf("https://www.my-proxy.com/%v", endpoint)
+				defer w.Done()
+				ipList, err := get(u)
+				if err != nil {
+					return
+				}
+				for _, ip := range findAllTemplate(reProxy, ipList, templateProxy) {
+					mutex.Lock()
+					proxies = append(proxies, ip)
+					mutex.Unlock()
+				}
+			}(href)
+		}
+		w.Wait()
+	}()
 	// list.proxylistplus.com
 	//go func() {
 	//	defer wgD.Done()
