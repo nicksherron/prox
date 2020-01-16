@@ -98,7 +98,7 @@ VERSION:
 			&cli.IntFlag{
 				Name:        "workers",
 				Aliases:     []string{"w"},
-				Value:       20,
+				Value:       50,
 				Usage:       "Number of (goroutines) concurrent requests to make for checking proxies.",
 				Destination: &workers,
 			},
