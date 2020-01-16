@@ -398,71 +398,71 @@ func downloadProxies() []string {
 	//	w.Wait()
 	//}()
 	// my-proxy.com tested:  1/16/20 found: 1026
-	go func() {
-		defer wgD.Done()
-		var (
-			w sync.WaitGroup
-			re  = regexp.MustCompile(`(?m)href\s*=\s*['"]([^'"]?free-[^'"]*)['"]`)
-			url = "https://www.my-proxy.com/free-proxy-list.html"
-		)
-
-		urlList, err := get(url)
-		if err != nil {
-			return
-		}
-		for _, href := range findSubmatchRange(re, urlList) {
-			w.Add(1)
-			go func(endpoint string) {
-				u := fmt.Sprintf("https://www.my-proxy.com/%v", endpoint)
-				defer w.Done()
-				ipList, err := get(u)
-				if err != nil {
-					return
-				}
-				for _, ip := range findAllTemplate(reProxy, ipList, templateProxy) {
-					mutex.Lock()
-					proxies = append(proxies, ip)
-					mutex.Unlock()
-				}
-			}(href)
-		}
-		w.Wait()
-	}()
-	// list.proxylistplus.com
 	//go func() {
 	//	defer wgD.Done()
 	//	var (
-	//		re   = regexp.MustCompile(`(?ms)<td>(?P<ip>(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?))(?:.*?(?:(?:(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?))|(?P<port>\d{2,5})))</td>`)
-	//		urls = []string{
-	//			"https://list.proxylistplus.com/Fresh-HTTP-Proxy-List-1",
-	//			"https://list.proxylistplus.com/Fresh-HTTP-Proxy-List-2",
-	//			"https://list.proxylistplus.com/Fresh-HTTP-Proxy-List-3",
-	//			"https://list.proxylistplus.com/Fresh-HTTP-Proxy-List-4",
-	//			"https://list.proxylistplus.com/Fresh-HTTP-Proxy-List-5",
-	//			"https://list.proxylistplus.com/Fresh-HTTP-Proxy-List-6",
-	//			"https://list.proxylistplus.com/ssl-List-1",
-	//			"https://list.proxylistplus.com/ssl-List-2",
-	//		}
+	//		w sync.WaitGroup
+	//		re  = regexp.MustCompile(`(?m)href\s*=\s*['"]([^'"]?free-[^'"]*)['"]`)
+	//		url = "https://www.my-proxy.com/free-proxy-list.html"
 	//	)
-	//	for _, url := range urls {
-	//		wgD.Add(1)
-	//		u := url
-	//		go func() {
-	//			defer wgD.Done()
+	//
+	//	urlList, err := get(url)
+	//	if err != nil {
+	//		return
+	//	}
+	//	for _, href := range findSubmatchRange(re, urlList) {
+	//		w.Add(1)
+	//		go func(endpoint string) {
+	//			u := fmt.Sprintf("https://www.my-proxy.com/%v", endpoint)
+	//			defer w.Done()
 	//			ipList, err := get(u)
 	//			if err != nil {
 	//				return
 	//			}
-	//			for _, ip := range findAllTemplate(re, ipList, templateProxy) {
+	//			for _, ip := range findAllTemplate(reProxy, ipList, templateProxy) {
 	//				mutex.Lock()
 	//				proxies = append(proxies, ip)
 	//				mutex.Unlock()
 	//			}
-	//		}()
-	//
+	//		}(href)
 	//	}
-	//
+	//	w.Wait()
 	//}()
+	// list.proxylistplus.com
+	go func() {
+		defer wgD.Done()
+		var (
+			w sync.WaitGroup
+			re   = regexp.MustCompile(`(?ms)<td>(?P<ip>(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?))(?:.*?(?:(?:(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?))|(?P<port>\d{2,5})))</td>`)
+			urls = []string{
+				"https://list.proxylistplus.com/Fresh-HTTP-Proxy-List-1",
+				"https://list.proxylistplus.com/Fresh-HTTP-Proxy-List-2",
+				"https://list.proxylistplus.com/Fresh-HTTP-Proxy-List-3",
+				"https://list.proxylistplus.com/Fresh-HTTP-Proxy-List-4",
+				"https://list.proxylistplus.com/Fresh-HTTP-Proxy-List-5",
+				"https://list.proxylistplus.com/Fresh-HTTP-Proxy-List-6",
+				"https://list.proxylistplus.com/ssl-List-1",
+				"https://list.proxylistplus.com/ssl-List-2",
+			}
+		)
+		for _, url := range urls {
+			w.Add(1)
+			u := url
+			go func(endpoint string) {
+				defer w.Done()
+				ipList, err := get(endpoint)
+				if err != nil {
+					return
+				}
+				for _, ip := range findAllTemplate(re, ipList, templateProxy) {
+					mutex.Lock()
+					proxies = append(proxies, ip)
+					mutex.Unlock()
+				}
+			}(u)
+		}
+		w.Wait()
+	}()
 	// xseo.in
 	//go func() {
 	//	defer wgD.Done()
