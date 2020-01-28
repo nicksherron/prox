@@ -3,8 +3,6 @@ package main
 import (
 	"encoding/base64"
 	"fmt"
-	"github.com/icrowley/fake"
-	cuckoo "github.com/seiflotfy/cuckoofilter"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -14,6 +12,9 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/icrowley/fake"
+	cuckoo "github.com/seiflotfy/cuckoofilter"
 )
 
 var (
@@ -220,7 +221,7 @@ func downloadProxies() []string {
 		}
 		w.Wait()
 	}()
-	// aliveproxy.com 1/16/20 found: 367
+	// aliveproxy.com tested:  1/16/20 found: 367
 	go func() {
 		defer wgD.Done()
 		var (
@@ -539,7 +540,7 @@ func downloadProxies() []string {
 	go counter(quit)
 	if deadline != 0 {
 		time.Sleep(time.Duration(deadline) * time.Second)
-	}else {
+	} else {
 		wgD.Wait()
 	}
 	quit <- 0
