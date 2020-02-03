@@ -1,3 +1,6 @@
+
+Unmaintained. Use https://github.com/nicksherron/proxi instead
+
 prox
 ===
 prox is a command line utility for quickly finding and testing proxies from the web.
